@@ -35,13 +35,26 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
-    // Config tests - create a module that includes config.zig
+    // Create modules for testing
     const config_module = b.createModule(.{
         .root_source_file = b.path("src/config.zig"),
         .target = target,
         .optimize = optimize,
     });
 
+    const scanner_module = b.createModule(.{
+        .root_source_file = b.path("src/scanner.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const parser_module = b.createModule(.{
+        .root_source_file = b.path("src/parser.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    // Config tests
     const config_tests = b.addTest(.{
         .root_module = b.createModule(.{
             .root_source_file = b.path("tests/config_test.zig"),
@@ -51,10 +64,34 @@ pub fn build(b: *std.Build) void {
     });
     config_tests.root_module.addImport("config", config_module);
 
+    // Scanner tests
+    const scanner_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/scanner_test.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    scanner_tests.root_module.addImport("scanner", scanner_module);
+
+    // Parser tests
+    const parser_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/parser_test.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    parser_tests.root_module.addImport("parser", parser_module);
+
     const run_unit_tests = b.addRunArtifact(unit_tests);
     const run_config_tests = b.addRunArtifact(config_tests);
+    const run_scanner_tests = b.addRunArtifact(scanner_tests);
+    const run_parser_tests = b.addRunArtifact(parser_tests);
     
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_config_tests.step);
+    test_step.dependOn(&run_scanner_tests.step);
+    test_step.dependOn(&run_parser_tests.step);
 }

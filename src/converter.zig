@@ -1,6 +1,6 @@
 const std = @import("std");
 const parser = @import("parser.zig");
-const NoteAtom = @import("note_atom.zig").NoteAtom;
+pub const NoteAtom = @import("note_atom.zig").NoteAtom;
 
 pub fn convertMarkdownToNoteAtom(allocator: std.mem.Allocator, markdown: []const u8) !NoteAtom {
     const tokens = try parser.tokenize(allocator, markdown);
