@@ -4,12 +4,6 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // Add zig-framework dependency
-    const framework = b.dependency("zig-framework", .{
-        .target = target,
-        .optimize = optimize,
-    });
-
     // Create executable
     const exe = b.addExecutable(.{
         .name = "mowen-cli",
@@ -19,7 +13,6 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
-    exe.root_module.addImport("framework", framework.module("framework"));
 
     b.installArtifact(exe);
 
@@ -41,7 +34,6 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
-    unit_tests.root_module.addImport("framework", framework.module("framework"));
 
     // Config tests - create a module that includes config.zig
     const config_module = b.createModule(.{

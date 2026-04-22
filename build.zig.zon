@@ -3,11 +3,7 @@
     .version = "0.1.0",
     .fingerprint = 0x31c3eef094484c9a,
     .minimum_zig_version = "0.15.2",
-    .dependencies = .{
-        .@"zig-framework" = .{
-            .path = "../zig-framework",
-        },
-    },
+    .dependencies = .{},
     .paths = .{
         "README.md",
         "build.zig",
