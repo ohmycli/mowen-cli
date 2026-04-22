@@ -1,0 +1,28 @@
+# Zig build artifacts
+zig-out/
+zig-cache/
+.zig-cache/
+
+# Configuration files with sensitive data
+config.json
+
+# Test files
+test_*.json
+test_*.zig
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Kiro artifacts
+.kiro/
+
+# OpenSpec working directory (optional - remove if you want to track changes)
+openspec/changes/
