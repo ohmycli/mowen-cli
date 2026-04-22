@@ -263,7 +263,10 @@ pub fn loadConfig(allocator: std.mem.Allocator, io: std.Io, environ_map: *const 
     }
 
     // 4. Validate final configuration
-    try validateConfig(&config);
+    validateConfig(&config) catch |err| {
+        config.deinit();
+        return err;
+    };
 
     return config;
 }
