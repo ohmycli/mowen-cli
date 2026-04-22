@@ -212,26 +212,32 @@ pub fn tokensToNoteAtoms(allocator: std.mem.Allocator, tokens: []Token) ![]NoteA
             .heading => |h| {
                 const inline_content = try parseInlineMarkup(allocator, h.text);
                 try atoms.append(allocator, .{ .paragraph = .{ .content = inline_content } });
+                // 释放原始 heading.text，因为 parseInlineMarkup 创建了新的副本
+                allocator.free(h.text);
             },
             .paragraph => |p| {
                 const inline_content = try parseInlineMarkup(allocator, p);
                 try atoms.append(allocator, .{ .paragraph = .{ .content = inline_content } });
+                // 释放原始 paragraph 字符串
+                allocator.free(p);
             },
             .quote => |q| {
                 const inline_content = try parseInlineMarkup(allocator, q);
                 const quote_content = try allocator.alloc(NoteAtom, 1);
                 quote_content[0] = .{ .paragraph = .{ .content = inline_content } };
                 try atoms.append(allocator, .{ .quote = .{ .content = quote_content } });
+                // 释放原始 quote 字符串
+                allocator.free(q);
             },
             .code_block => |cb| {
                 // Create text node for code content
                 const code_text = try allocator.alloc(NoteAtom, 1);
                 code_text[0] = .{ .text = .{ .text = cb.code } };
-
                 try atoms.append(allocator, .{ .codeblock = .{
                     .attrs = .{ .language = cb.language },
                     .content = code_text,
                 } });
+                // cb.code 和 cb.language 的所有权已转移到 NoteAtom，不需要释放
             },
             .horizontal_rule => {
                 try atoms.append(allocator, .{ .horizontal_rule = {} });
