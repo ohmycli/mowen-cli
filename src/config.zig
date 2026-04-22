@@ -73,7 +73,7 @@ pub const Config = struct {
 // Returns config.json in the current working directory (same as exe location when run from there)
 pub fn getDefaultConfigPath(allocator: std.mem.Allocator, environ_map: *const std.process.Environ.Map) ![]const u8 {
     _ = environ_map; // Not needed for current directory path
-    
+
     // Simply return "config.json" - will be resolved relative to current working directory
     // When the exe is run from zig-out/bin/, it will look for zig-out/bin/config.json
     return try allocator.dupe(u8, "config.json");

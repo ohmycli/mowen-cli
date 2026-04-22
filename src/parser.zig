@@ -227,7 +227,7 @@ pub fn tokensToNoteAtoms(allocator: std.mem.Allocator, tokens: []Token) ![]NoteA
                 // Create text node for code content
                 const code_text = try allocator.alloc(NoteAtom, 1);
                 code_text[0] = .{ .text = .{ .text = cb.code } };
-                
+
                 try atoms.append(allocator, .{ .codeblock = .{
                     .attrs = .{ .language = cb.language },
                     .content = code_text,
