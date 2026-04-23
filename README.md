@@ -1,132 +1,134 @@
+[中文](README_CN.md) | English
+
 # Mowen CLI
 
-一个用 Zig 编写的命令行工具，用于管理墨问平台的 Markdown 笔记。支持单文件管理和批量上传，**所有模式都支持元数据追踪和后续编辑**。
+A command-line tool written in Zig for managing Markdown notes on the Mowen platform. Supports single-file management and batch uploads — **all modes support metadata tracking and subsequent editing**.
 
-## 特性
+## Features
 
-- ✅ **单文件管理**：创建、编辑、设置隐私
-- ✅ **批量上传**：自动扫描并上传所有 .md 文件
-- ✅ **元数据追踪**：所有上传方式都保存 noteId，支持后续编辑
-- ✅ **自动限速**：1 秒/文件，避免触发 API 限制
-- ✅ **标签管理**：支持为笔记添加标签
-- ✅ **灵活配置**：配置文件/环境变量/命令行参数
-- ✅ **预览模式**：dry-run 模式，不实际上传
-- ✅ **零依赖**：单文件可执行程序
-- ✅ **跨平台**：Windows/Linux/macOS
+- ✅ **Single-file management**: Create, edit, set privacy
+- ✅ **Batch upload**: Automatically scan and upload all .md files
+- ✅ **Metadata tracking**: All upload methods save noteId for subsequent editing
+- ✅ **Auto rate limiting**: 1 second/file to avoid triggering API limits
+- ✅ **Tag management**: Add tags to notes
+- ✅ **Flexible configuration**: Config file / environment variables / CLI arguments
+- ✅ **Preview mode**: Dry-run mode without actual uploads
+- ✅ **Zero dependencies**: Single executable binary
+- ✅ **Cross-platform**: Windows/Linux/macOS
 
-## 快速开始
+## Quick Start
 
-### 1. 下载
+### 1. Download
 
-从 [Releases](https://github.com/ohmycli/mowen-cli/releases) 页面下载对应平台的可执行文件。
+Download the executable for your platform from the [Releases](https://github.com/ohmycli/mowen-cli/releases) page.
 
-或者从源码编译：
+Or build from source:
 
 ```bash
-# 需要 Zig 0.16.0
+# Requires Zig 0.16.0
 git clone https://github.com/ohmycli/mowen-cli.git
 cd mowen-cli
 zig build
 ```
 
-编译后的可执行文件位于 `zig-out/bin/mowen-cli.exe`（Windows）或 `zig-out/bin/mowen-cli`（Linux/macOS）。
+The compiled executable is at `zig-out/bin/mowen-cli.exe` (Windows) or `zig-out/bin/mowen-cli` (Linux/macOS).
 
-### 2. 配置
+### 2. Configuration
 
-在可执行文件所在目录创建 `config.json` 文件：
+Create a `config.json` file in the same directory as the executable:
 
 ```json
 {
   "api_key": "your-api-key-here",
   "api_endpoint": "https://open.mowen.cn/api/open/api/v1/note/create",
   "timeout_ms": 30000,
-  "default_tags": ["技术", "笔记"],
+  "default_tags": ["tech", "notes"],
   "auto_publish": false
 }
 ```
 
-**配置项说明：**
+**Configuration fields:**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `api_key` | string | 是 | 墨问平台的 API 密钥 |
-| `api_endpoint` | string | 是 | API 端点地址 |
-| `timeout_ms` | number | 是 | 请求超时时间（毫秒），范围 1000-300000 |
-| `default_tags` | array | 否 | 默认标签列表 |
-| `auto_publish` | boolean | 否 | 是否自动发布笔记 |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `api_key` | string | Yes | Mowen platform API key |
+| `api_endpoint` | string | Yes | API endpoint URL |
+| `timeout_ms` | number | Yes | Request timeout in milliseconds, range 1000-300000 |
+| `default_tags` | array | No | Default tag list |
+| `auto_publish` | boolean | No | Whether to auto-publish notes |
 
-**获取 API Key：**
+**Getting an API Key:**
 
-1. 登录墨问平台
-2. 进入个人设置 → API 管理
-3. 创建新的 API 密钥
-4. 复制密钥到配置文件
+1. Log in to the Mowen platform
+2. Go to Personal Settings → API Management
+3. Create a new API key
+4. Copy the key to your config file
 
-### 3. 使用
+### 3. Usage
 
-Mowen CLI 提供两种使用模式：
+Mowen CLI provides two usage modes:
 
-## 使用模式
+## Usage Modes
 
-### 模式一：单文件管理（推荐）
+### Mode 1: Single-file Management (Recommended)
 
-适合日常笔记管理，支持后续编辑和隐私设置。
+Ideal for daily note management, with support for subsequent editing and privacy settings.
 
-#### 创建笔记
+#### Create a Note
 
 ```bash
-# 创建新笔记
+# Create a new note
 mowen-cli create README.md
 
-# 创建并自动发布
+# Create and auto-publish
 mowen-cli create README.md --auto-publish
 
-# 创建并添加标签
-mowen-cli create README.md --tags "技术,教程"
+# Create with tags
+mowen-cli create README.md --tags "tech,tutorial"
 
-# 组合使用
-mowen-cli create README.md --tags "博客,Zig" --auto-publish
+# Combined usage
+mowen-cli create README.md --tags "blog,Zig" --auto-publish
 ```
 
-创建成功后，笔记 ID 会自动保存到 `.mowen/metadata.json`，方便后续编辑。
+After successful creation, the note ID is automatically saved to `.mowen/metadata.json` for subsequent editing.
 
-#### 编辑笔记
+#### Edit a Note
 
 ```bash
-# 编辑已创建的笔记（自动查找 noteId）
+# Edit a previously created note (auto-finds noteId)
 mowen-cli edit README.md
 
-# 预览模式
+# Preview mode
 mowen-cli edit README.md --dry-run
 ```
 
-**注意**：只能编辑通过 `create` 命令创建的笔记。
+**Note**: Only notes created via the `create` command can be edited.
 
-#### 设置隐私
+#### Set Privacy
 
 ```bash
-# 设置为私密
+# Set to private
 mowen-cli set-privacy README.md --privacy private
 
-# 设置为公开
+# Set to public
 mowen-cli set-privacy README.md --privacy public
 
-# 设置为规则可见
+# Set to rule-based visibility
 mowen-cli set-privacy README.md --privacy rule
 ```
 
-### 模式二：批量上传
+### Mode 2: Batch Upload
 
-适合一次性导入大量文件，**现在也支持保存元数据**，可以后续编辑。
+Ideal for importing a large number of files at once. **Now also supports saving metadata** for subsequent editing.
 
-#### 基本批量上传
+#### Basic Batch Upload
 
 ```bash
-# 上传当前目录下所有 .md 文件
+# Upload all .md files in the current directory
 mowen-cli upload
 ```
 
-输出示例：
+Example output:
 ```
 Found 5 markdown file(s)
 
@@ -141,16 +143,16 @@ Found 5 markdown file(s)
   You can now use 'edit' and 'set-privacy' commands on these files.
 ```
 
-**新特性**：批量上传后，所有成功上传的文件的 noteId 都会自动保存到 `.mowen/metadata.json`，你可以后续使用 `edit` 和 `set-privacy` 命令！
+**New feature**: After batch upload, noteIds for all successfully uploaded files are automatically saved to `.mowen/metadata.json`. You can then use `edit` and `set-privacy` commands!
 
-#### 预览模式
+#### Preview Mode
 
 ```bash
-# 只扫描文件，不实际上传
+# Only scan files, no actual upload
 mowen-cli upload --dry-run
 ```
 
-输出示例：
+Example output:
 ```
 Found 3 markdown file(s)
 
@@ -161,59 +163,59 @@ Found 3 markdown file(s)
   - ./tutorial.md
 ```
 
-#### 添加标签
+#### Add Tags
 
 ```bash
-# 为上传的笔记添加标签
-mowen-cli upload --tags "博客,技术分享,Zig"
+# Add tags to uploaded notes
+mowen-cli upload --tags "blog,tech sharing,Zig"
 ```
 
-#### 自动发布
+#### Auto-publish
 
 ```bash
-# 上传后自动发布笔记
+# Auto-publish notes after upload
 mowen-cli upload --auto-publish
 ```
 
-#### 组合使用
+#### Combined Usage
 
 ```bash
-# 批量上传并自动发布，添加自定义标签
-mowen-cli upload --auto-publish --tags "技术,笔记"
+# Batch upload with auto-publish and custom tags
+mowen-cli upload --auto-publish --tags "tech,notes"
 
-# 使用临时 API Key
-mowen-cli upload --api-key YOUR_API_KEY --tags "重要"
+# Use a temporary API Key
+mowen-cli upload --api-key YOUR_API_KEY --tags "important"
 ```
 
-### 两种模式对比
+### Mode Comparison
 
-| 功能 | 单文件管理 (`create`/`edit`/`set-privacy`) | 批量上传 (`upload`) |
-|------|-------------------------------------------|-------------------|
-| **文件数量** | 单个文件 | 当前目录所有 .md 文件 |
-| **元数据管理** | ✅ 保存到 `.mowen/metadata.json` | ✅ 保存到 `.mowen/metadata.json` |
-| **后续编辑** | ✅ 支持 `edit` 命令 | ✅ 支持 `edit` 命令 |
-| **隐私设置** | ✅ 支持 `set-privacy` 命令 | ✅ 支持 `set-privacy` 命令 |
-| **使用场景** | 日常笔记管理 | 一次性批量导入 |
-| **推荐度** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| Feature | Single-file (`create`/`edit`/`set-privacy`) | Batch upload (`upload`) |
+|---------|----------------------------------------------|------------------------|
+| **File count** | Single file | All .md files in current directory |
+| **Metadata management** | ✅ Saved to `.mowen/metadata.json` | ✅ Saved to `.mowen/metadata.json` |
+| **Subsequent editing** | ✅ Supports `edit` command | ✅ Supports `edit` command |
+| **Privacy settings** | ✅ Supports `set-privacy` command | ✅ Supports `set-privacy` command |
+| **Use case** | Daily note management | One-time batch import |
+| **Recommendation** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 
-**好消息**：现在两种模式都支持完整的元数据管理！你可以放心使用批量上传，之后依然可以编辑和设置隐私。
+**Good news**: Both modes now support full metadata management! You can safely use batch upload and still edit and set privacy afterwards.
 
-**建议**：
-- 日常单个文件操作：使用 `create`/`edit`/`set-privacy` 命令
-- 首次导入大量文件：使用 `upload` 命令，快速批量上传
+**Suggestions**:
+- For daily single-file operations: Use `create`/`edit`/`set-privacy` commands
+- For first-time bulk import: Use the `upload` command for quick batch uploading
 
-## 配置优先级
+## Configuration Priority
 
-当同一个配置项在多个地方都有设置时，优先级如下（从高到低）：
+When the same setting is configured in multiple places, priority is as follows (highest to lowest):
 
-1. **命令行参数**：`--api-key`、`--auto-publish` 等
-2. **环境变量**：`MOWEN_API_KEY`、`MOWEN_API_ENDPOINT`
-3. **配置文件**：`config.json`
-4. **默认值**
+1. **CLI arguments**: `--api-key`, `--auto-publish`, etc.
+2. **Environment variables**: `MOWEN_API_KEY`, `MOWEN_API_ENDPOINT`
+3. **Config file**: `config.json`
+4. **Default values**
 
-### 环境变量
+### Environment Variables
 
-支持以下环境变量：
+The following environment variables are supported:
 
 ```bash
 # Windows PowerShell
@@ -225,27 +227,27 @@ export MOWEN_API_KEY="your-api-key"
 export MOWEN_API_ENDPOINT="https://open.mowen.cn/api/open/api/v1/note/create"
 ```
 
-## 命令行参考
+## CLI Reference
 
-### 全局选项
+### Global Options
 
 ```bash
-mowen-cli --help              # 显示帮助信息
-mowen-cli --version           # 显示版本信息
+mowen-cli --help              # Show help information
+mowen-cli --version           # Show version information
 ```
 
-### create 命令
+### create Command
 
-创建新笔记。
+Create a new note.
 
 ```bash
 mowen-cli create <file> [options]
 
 Options:
-  --api-key <KEY>           覆盖配置的 API Key
-  --tags <TAG1,TAG2>        添加标签（逗号分隔）
-  --auto-publish            自动发布笔记
-  --dry-run                 预览模式，不实际上传
+  --api-key <KEY>           Override configured API Key
+  --tags <TAG1,TAG2>        Add tags (comma-separated)
+  --auto-publish            Auto-publish the note
+  --dry-run                 Preview mode, no actual upload
 
 Examples:
   mowen-cli create README.md
@@ -253,51 +255,51 @@ Examples:
   mowen-cli create doc.md --dry-run
 ```
 
-### edit 命令
+### edit Command
 
-编辑已创建的笔记。
+Edit a previously created note.
 
 ```bash
 mowen-cli edit <file> [options]
 
 Options:
-  --api-key <KEY>           覆盖配置的 API Key
-  --dry-run                 预览模式，不实际上传
+  --api-key <KEY>           Override configured API Key
+  --dry-run                 Preview mode, no actual upload
 
 Examples:
   mowen-cli edit README.md
   mowen-cli edit guide.md --dry-run
 ```
 
-### set-privacy 命令
+### set-privacy Command
 
-设置笔记隐私。
+Set note privacy.
 
 ```bash
 mowen-cli set-privacy <file> --privacy <public|private|rule> [options]
 
 Options:
-  --privacy <TYPE>          隐私类型：public（公开）、private（私密）、rule（规则可见）
-  --api-key <KEY>           覆盖配置的 API Key
-  --dry-run                 预览模式，不实际操作
+  --privacy <TYPE>          Privacy type: public, private, rule (rule-based visibility)
+  --api-key <KEY>           Override configured API Key
+  --dry-run                 Preview mode, no actual operation
 
 Examples:
   mowen-cli set-privacy README.md --privacy private
   mowen-cli set-privacy guide.md --privacy public
 ```
 
-### upload 命令
+### upload Command
 
-批量上传当前目录所有 .md 文件。
+Batch upload all .md files in the current directory.
 
 ```bash
 mowen-cli upload [options]
 
 Options:
-  --api-key <KEY>           覆盖配置的 API Key
-  --tags <TAG1,TAG2>        添加标签（逗号分隔）
-  --auto-publish            自动发布笔记
-  --dry-run                 预览模式，不实际上传
+  --api-key <KEY>           Override configured API Key
+  --tags <TAG1,TAG2>        Add tags (comma-separated)
+  --auto-publish            Auto-publish notes
+  --dry-run                 Preview mode, no actual upload
 
 Examples:
   mowen-cli upload
@@ -306,157 +308,157 @@ Examples:
   mowen-cli upload --api-key YOUR_KEY
 ```
 
-## 支持的 Markdown 语法
+## Supported Markdown Syntax
 
-目前支持以下 Markdown 语法：
+The following Markdown syntax is currently supported:
 
-- ✅ 标题（H1-H6）
-- ✅ 段落
-- ✅ 粗体、斜体
-- ✅ 链接
-- ✅ 列表（有序、无序）
-- ✅ 代码块
-- ✅ 引用
-- ✅ 分隔线
+- ✅ Headings (H1-H6)
+- ✅ Paragraphs
+- ✅ Bold, italic
+- ✅ Links
+- ✅ Lists (ordered, unordered)
+- ✅ Code blocks
+- ✅ Blockquotes
+- ✅ Horizontal rules
 
-## 常见问题
+## FAQ
 
-### Q: 上传失败怎么办？
+### Q: What should I do if upload fails?
 
-A: 检查以下几点：
-1. API Key 是否正确
-2. 网络连接是否正常
-3. API 端点地址是否正确
-4. Markdown 文件格式是否正确
+A: Check the following:
+1. Is the API Key correct?
+2. Is the network connection working?
+3. Is the API endpoint URL correct?
+4. Is the Markdown file format valid?
 
-### Q: `create` 和 `upload` 有什么区别？
+### Q: What's the difference between `create` and `upload`?
 
-A: 
-- **`create`**：单文件操作，适合日常笔记管理
-- **`upload`**：批量操作，适合一次性导入大量文件
+A:
+- **`create`**: Single-file operation, ideal for daily note management
+- **`upload`**: Batch operation, ideal for importing a large number of files at once
 
-**现在两者都支持元数据保存**，都可以后续使用 `edit` 和 `set-privacy` 命令！
+**Both now support metadata saving**, and both can use `edit` and `set-privacy` commands afterwards!
 
-### Q: 批量上传后可以编辑吗？
+### Q: Can I edit files after batch upload?
 
-A: **可以！** 从 v0.1.0 开始，`upload` 命令会自动保存所有成功上传文件的 noteId 到 `.mowen/metadata.json`。批量上传后，你可以使用：
+A: **Yes!** Starting from v0.1.0, the `upload` command automatically saves noteIds for all successfully uploaded files to `.mowen/metadata.json`. After batch upload, you can use:
 
 ```bash
-# 编辑批量上传的文件
+# Edit a batch-uploaded file
 mowen-cli edit README.md
 
-# 设置隐私
+# Set privacy
 mowen-cli set-privacy README.md --privacy private
 ```
 
-### Q: 为什么 `edit` 命令提示找不到元数据？
+### Q: Why does the `edit` command say metadata not found?
 
-A: 可能的原因：
-1. 文件从未通过 `create` 或 `upload` 命令上传过
-2. `.mowen/metadata.json` 文件被删除或损坏
-3. 文件路径发生了变化（移动或重命名）
+A: Possible reasons:
+1. The file was never uploaded via `create` or `upload`
+2. The `.mowen/metadata.json` file was deleted or corrupted
+3. The file path has changed (moved or renamed)
 
-**解决方案**：
-- 如果是新文件，使用 `mowen-cli create <file>` 创建
-- 如果文件已上传但元数据丢失，重新 `create` 会覆盖原笔记
+**Solutions**:
+- For new files, use `mowen-cli create <file>` to create
+- If the file was uploaded but metadata is lost, re-running `create` will overwrite the original note
 
-### Q: 元数据保存在哪里？
+### Q: Where is metadata stored?
 
-A: 元数据保存在当前目录的 `.mowen/metadata.json` 文件中，记录了文件路径和对应的 noteId。
+A: Metadata is stored in the `.mowen/metadata.json` file in the current directory, recording file paths and their corresponding noteIds.
 
-### Q: 可以上传子目录中的文件吗？
+### Q: Can I upload files in subdirectories?
 
-A: 
-- **`create`/`edit`/`set-privacy`**：支持任意路径的文件
-- **`upload`**：只扫描当前目录，不包括子目录
+A:
+- **`create`/`edit`/`set-privacy`**: Supports files at any path
+- **`upload`**: Only scans the current directory, excluding subdirectories
 
-### Q: 上传速度为什么这么慢？
+### Q: Why is the upload speed so slow?
 
-A: 为了避免触发 API 限流，程序会自动限速为每秒 1 个文件。这是正常行为。
+A: To avoid triggering API rate limits, the program automatically limits to 1 file per second. This is normal behavior.
 
-### Q: 如何批量删除已上传的笔记？
+### Q: How do I batch delete uploaded notes?
 
-A: 目前工具只支持上传功能，删除操作请在墨问平台网页端进行。
+A: The tool currently only supports upload functionality. For deletion, please use the Mowen platform web interface.
 
-### Q: 配置文件必须和可执行文件在同一目录吗？
+### Q: Does the config file have to be in the same directory as the executable?
 
-A: 是的。程序会在当前工作目录查找 `config.json`。建议将可执行文件和配置文件放在同一目录，并从该目录运行程序。
+A: Yes. The program looks for `config.json` in the current working directory. It's recommended to place the executable and config file in the same directory and run the program from there.
 
-### Q: 批量上传时某个文件失败了怎么办？
+### Q: What if a file fails during batch upload?
 
-A: 单个文件失败不会影响其他文件继续上传。上传完成后会显示成功和失败的数量。可以检查失败原因后重新运行。
+A: A single file failure won't affect other files from continuing to upload. After completion, the success and failure counts are displayed. You can check the failure reason and re-run.
 
-## 开发
+## Development
 
-### 环境要求
+### Requirements
 
-- Zig 0.16.0 或更高版本
+- Zig 0.16.0 or higher
 
-### 编译
+### Build
 
 ```bash
-# 开发模式编译
+# Development build
 zig build
 
-# 发布模式编译（优化）
+# Release build (optimized)
 zig build -Doptimize=ReleaseFast
 
-# 运行测试
+# Run tests
 zig build test
 ```
 
-### 项目结构
+### Project Structure
 
 ```
 mowen-cli/
 ├── src/
-│   ├── main.zig           # 主程序入口（CLI 命令处理）
-│   ├── config.zig         # 配置管理（文件/环境变量/命令行）
-│   ├── scanner.zig        # 文件扫描和读取
-│   ├── parser.zig         # Markdown 词法和语法解析
-│   ├── converter.zig      # Markdown → NoteAtom 转换
-│   ├── note_atom.zig      # 墨问笔记格式定义和 JSON 序列化
-│   ├── uploader.zig       # API 调用（create/edit/set-privacy）
-│   └── metadata.zig       # 元数据管理（noteId 追踪）
+│   ├── main.zig           # Main entry point (CLI command handling)
+│   ├── config.zig         # Configuration management (file/env/CLI)
+│   ├── scanner.zig        # File scanning and reading
+│   ├── parser.zig         # Markdown lexing and parsing
+│   ├── converter.zig      # Markdown → NoteAtom conversion
+│   ├── note_atom.zig      # Mowen note format definition and JSON serialization
+│   ├── uploader.zig       # API calls (create/edit/set-privacy)
+│   └── metadata.zig       # Metadata management (noteId tracking)
 ├── tests/
-│   ├── config_test.zig    # 配置模块测试
-│   ├── parser_test.zig    # 解析器测试
-│   └── scanner_test.zig   # 扫描器测试
-├── build.zig              # 构建脚本
-├── config.example.json    # 配置文件示例
-└── README.md              # 本文档
+│   ├── config_test.zig    # Configuration module tests
+│   ├── parser_test.zig    # Parser tests
+│   └── scanner_test.zig   # Scanner tests
+├── build.zig              # Build script
+├── config.example.json    # Example config file
+└── README.md              # This document
 ```
 
-## 贡献
+## Contributing
 
-欢迎提交 Issue 和 Pull Request！
+Issues and Pull Requests are welcome!
 
-## 许可证
+## License
 
 MIT License
 
-## 更新日志
+## Changelog
 
 ### v0.1.0 (2026-04-22)
 
-**核心功能**
-- ✅ 单文件管理：`create`、`edit`、`set-privacy` 命令
-- ✅ 批量上传：`upload` 命令，自动扫描当前目录
-- ✅ **元数据管理**：`upload` 命令现在也会保存 noteId，支持后续编辑！
-- ✅ Markdown 解析：支持标题、段落、粗体、链接、引用、代码块、分隔线
-- ✅ 配置管理：支持配置文件、环境变量、命令行参数
-- ✅ 限频控制：自动 1秒/次，避免触发 API 限制
-- ✅ 预览模式：dry-run 支持
+**Core Features**
+- ✅ Single-file management: `create`, `edit`, `set-privacy` commands
+- ✅ Batch upload: `upload` command, auto-scans current directory
+- ✅ **Metadata management**: `upload` command now also saves noteId for subsequent editing!
+- ✅ Markdown parsing: Supports headings, paragraphs, bold, links, blockquotes, code blocks, horizontal rules
+- ✅ Configuration management: Supports config file, environment variables, CLI arguments
+- ✅ Rate limiting: Auto 1 second/request to avoid triggering API limits
+- ✅ Preview mode: Dry-run support
 
-**测试**
-- ✅ 27 个单元测试，全部通过
-- ✅ 配置管理测试
-- ✅ Markdown 解析器测试
-- ✅ 文件扫描器测试
+**Testing**
+- ✅ 27 unit tests, all passing
+- ✅ Configuration management tests
+- ✅ Markdown parser tests
+- ✅ File scanner tests
 
-**重要改进**
-- 🎉 批量上传现在也支持元数据保存，可以后续编辑和设置隐私
+**Key Improvements**
+- 🎉 Batch upload now supports metadata saving for subsequent editing and privacy settings
 
 ---
 
-**注意**：本工具仅供学习和个人使用，请遵守墨问平台的使用条款和 API 限制。
+**Note**: This tool is for learning and personal use only. Please comply with the Mowen platform's terms of service and API limits.
