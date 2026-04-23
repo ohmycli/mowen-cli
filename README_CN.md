@@ -40,7 +40,7 @@ zig build
 ```json
 {
   "api_key": "your-api-key-here",
-  "api_endpoint": "https://open.mowen.cn/api/open/api/v1/note/create",
+  "api_endpoint": "https://open.mowen.cn/api/open/api/v1",
   "timeout_ms": 30000,
   "default_tags": ["技术", "笔记"],
   "auto_publish": false
@@ -220,11 +220,11 @@ mowen-cli upload --api-key YOUR_API_KEY --tags "重要"
 ```bash
 # Windows PowerShell
 $env:MOWEN_API_KEY="your-api-key"
-$env:MOWEN_API_ENDPOINT="https://open.mowen.cn/api/open/api/v1/note/create"
+$env:MOWEN_API_ENDPOINT="https://open.mowen.cn/api/open/api/v1"
 
 # Linux/macOS
 export MOWEN_API_KEY="your-api-key"
-export MOWEN_API_ENDPOINT="https://open.mowen.cn/api/open/api/v1/note/create"
+export MOWEN_API_ENDPOINT="https://open.mowen.cn/api/open/api/v1"
 ```
 
 ## 命令行参考

@@ -40,7 +40,7 @@ Create a `config.json` file in the same directory as the executable:
 ```json
 {
   "api_key": "your-api-key-here",
-  "api_endpoint": "https://open.mowen.cn/api/open/api/v1/note/create",
+  "api_endpoint": "https://open.mowen.cn/api/open/api/v1",
   "timeout_ms": 30000,
   "default_tags": ["tech", "notes"],
   "auto_publish": false
@@ -220,11 +220,11 @@ The following environment variables are supported:
 ```bash
 # Windows PowerShell
 $env:MOWEN_API_KEY="your-api-key"
-$env:MOWEN_API_ENDPOINT="https://open.mowen.cn/api/open/api/v1/note/create"
+$env:MOWEN_API_ENDPOINT="https://open.mowen.cn/api/open/api/v1"
 
 # Linux/macOS
 export MOWEN_API_KEY="your-api-key"
-export MOWEN_API_ENDPOINT="https://open.mowen.cn/api/open/api/v1/note/create"
+export MOWEN_API_ENDPOINT="https://open.mowen.cn/api/open/api/v1"
 ```
 
 ## CLI Reference
