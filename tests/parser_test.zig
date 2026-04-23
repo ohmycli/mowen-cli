@@ -5,7 +5,7 @@ const testing = std.testing;
 test "tokenize heading" {
     const allocator = testing.allocator;
     const content = "# Hello World";
-    
+
     const tokens = try parser.tokenize(allocator, content);
     defer {
         for (tokens) |token| {
@@ -27,7 +27,7 @@ test "tokenize heading" {
         }
         allocator.free(tokens);
     }
-    
+
     try testing.expectEqual(@as(usize, 1), tokens.len);
     try testing.expect(tokens[0] == .heading);
     try testing.expectEqual(@as(u8, 1), tokens[0].heading.level);
@@ -36,12 +36,12 @@ test "tokenize heading" {
 
 test "tokenize multiple headings" {
     const allocator = testing.allocator;
-    const content = 
+    const content =
         \\# Heading 1
         \\## Heading 2
         \\### Heading 3
     ;
-    
+
     const tokens = try parser.tokenize(allocator, content);
     defer {
         for (tokens) |token| {
@@ -63,7 +63,7 @@ test "tokenize multiple headings" {
         }
         allocator.free(tokens);
     }
-    
+
     try testing.expectEqual(@as(usize, 3), tokens.len);
     try testing.expectEqual(@as(u8, 1), tokens[0].heading.level);
     try testing.expectEqual(@as(u8, 2), tokens[1].heading.level);
@@ -73,7 +73,7 @@ test "tokenize multiple headings" {
 test "tokenize paragraph" {
     const allocator = testing.allocator;
     const content = "This is a simple paragraph.";
-    
+
     const tokens = try parser.tokenize(allocator, content);
     defer {
         for (tokens) |token| {
@@ -95,7 +95,7 @@ test "tokenize paragraph" {
         }
         allocator.free(tokens);
     }
-    
+
     try testing.expectEqual(@as(usize, 1), tokens.len);
     try testing.expect(tokens[0] == .paragraph);
 }
@@ -103,7 +103,7 @@ test "tokenize paragraph" {
 test "tokenize bold text" {
     const allocator = testing.allocator;
     const content = "This is **bold** text.";
-    
+
     const tokens = try parser.tokenize(allocator, content);
     defer {
         for (tokens) |token| {
@@ -125,7 +125,7 @@ test "tokenize bold text" {
         }
         allocator.free(tokens);
     }
-    
+
     try testing.expect(tokens.len > 0);
     // Bold should be detected in the paragraph
 }
@@ -133,7 +133,7 @@ test "tokenize bold text" {
 test "tokenize link" {
     const allocator = testing.allocator;
     const content = "Check [this link](https://example.com) out.";
-    
+
     const tokens = try parser.tokenize(allocator, content);
     defer {
         for (tokens) |token| {
@@ -155,14 +155,14 @@ test "tokenize link" {
         }
         allocator.free(tokens);
     }
-    
+
     try testing.expect(tokens.len > 0);
 }
 
 test "tokenize quote" {
     const allocator = testing.allocator;
     const content = "> This is a quote";
-    
+
     const tokens = try parser.tokenize(allocator, content);
     defer {
         for (tokens) |token| {
@@ -184,19 +184,19 @@ test "tokenize quote" {
         }
         allocator.free(tokens);
     }
-    
+
     try testing.expectEqual(@as(usize, 1), tokens.len);
     try testing.expect(tokens[0] == .quote);
 }
 
 test "tokenize code block" {
     const allocator = testing.allocator;
-    const content = 
+    const content =
         \\```zig
         \\const x = 42;
         \\```
     ;
-    
+
     const tokens = try parser.tokenize(allocator, content);
     defer {
         for (tokens) |token| {
@@ -218,7 +218,7 @@ test "tokenize code block" {
         }
         allocator.free(tokens);
     }
-    
+
     try testing.expectEqual(@as(usize, 1), tokens.len);
     try testing.expect(tokens[0] == .code_block);
     try testing.expectEqualStrings("zig", tokens[0].code_block.language);
@@ -227,7 +227,7 @@ test "tokenize code block" {
 test "tokenize horizontal rule" {
     const allocator = testing.allocator;
     const content = "---";
-    
+
     const tokens = try parser.tokenize(allocator, content);
     defer {
         for (tokens) |token| {
@@ -249,7 +249,7 @@ test "tokenize horizontal rule" {
         }
         allocator.free(tokens);
     }
-    
+
     try testing.expectEqual(@as(usize, 1), tokens.len);
     try testing.expect(tokens[0] == .horizontal_rule);
 }
@@ -257,7 +257,7 @@ test "tokenize horizontal rule" {
 test "tokenize empty content" {
     const allocator = testing.allocator;
     const content = "";
-    
+
     const tokens = try parser.tokenize(allocator, content);
     defer {
         for (tokens) |token| {
@@ -279,6 +279,6 @@ test "tokenize empty content" {
         }
         allocator.free(tokens);
     }
-    
+
     try testing.expectEqual(@as(usize, 0), tokens.len);
 }

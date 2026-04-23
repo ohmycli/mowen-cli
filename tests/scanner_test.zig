@@ -5,7 +5,7 @@ const testing = std.testing;
 test "scanMarkdownFiles - basic functionality" {
     const allocator = testing.allocator;
     const io = std.testing.io;
-    
+
     // Test with current directory - should not crash
     const files = scanner.scanMarkdownFiles(allocator, io, ".") catch |err| {
         // It's okay if it fails with FileNotFound or similar
@@ -20,7 +20,7 @@ test "scanMarkdownFiles - basic functionality" {
         }
         allocator.free(files);
     }
-    
+
     // Just verify it returns a valid slice
     _ = files.len;
 }
@@ -28,8 +28,7 @@ test "scanMarkdownFiles - basic functionality" {
 test "readFileContent - nonexistent file" {
     const allocator = testing.allocator;
     const io = std.testing.io;
-    
+
     const result = scanner.readFileContent(allocator, io, "nonexistent_file_that_does_not_exist.md");
     try testing.expectError(error.FileNotFound, result);
 }
-
