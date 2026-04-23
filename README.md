@@ -18,13 +18,13 @@
 
 ### 1. 下载
 
-从 [Releases](https://github.com/your-repo/mowen-cli/releases) 页面下载对应平台的可执行文件。
+从 [Releases](https://github.com/ohmycli/mowen-cli/releases) 页面下载对应平台的可执行文件。
 
 或者从源码编译：
 
 ```bash
 # 需要 Zig 0.16.0
-git clone https://github.com/your-repo/mowen-cli.git
+git clone https://github.com/ohmycli/mowen-cli.git
 cd mowen-cli
 zig build
 ```
