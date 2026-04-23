@@ -70,13 +70,16 @@ pub const Config = struct {
 };
 
 // Get default configuration file path
-// Returns config.json in the current working directory (same as exe location when run from there)
-pub fn getDefaultConfigPath(allocator: std.mem.Allocator, environ_map: *const std.process.Environ.Map) ![]const u8 {
-    _ = environ_map; // Not needed for current directory path
+// Returns config.json in the executable's directory
+pub fn getDefaultConfigPath(allocator: std.mem.Allocator, io: std.Io, environ_map: *const std.process.Environ.Map) ![]const u8 {
+    _ = environ_map;
 
-    // Simply return "config.json" - will be resolved relative to current working directory
-    // When the exe is run from zig-out/bin/, it will look for zig-out/bin/config.json
-    return try allocator.dupe(u8, "config.json");
+    // Get the executable directory path
+    const exe_dir_path = try std.process.executableDirPathAlloc(io, allocator);
+    defer allocator.free(exe_dir_path);
+
+    // Join with config.json
+    return try std.fs.path.join(allocator, &[_][]const u8{ exe_dir_path, "config.json" });
 }
 
 // Load configuration from JSON file
@@ -242,8 +245,8 @@ pub fn loadConfig(allocator: std.mem.Allocator, io: std.Io, environ_map: *const 
         if (args.config_path) |path| {
             break :blk try temp_allocator.dupe(u8, path);
         }
-        break :blk try getDefaultConfigPath(temp_allocator, environ_map);
-    } else try getDefaultConfigPath(temp_allocator, environ_map);
+        break :blk try getDefaultConfigPath(temp_allocator, io, environ_map);
+    } else try getDefaultConfigPath(temp_allocator, io, environ_map);
 
     // 1. Load from file (or use default if not found)
     var config = loadFromFile(allocator, io, config_path) catch |err| blk: {

@@ -8,6 +8,7 @@ const metadata = @import("metadata.zig");
 const NoteRequest = @import("note_atom.zig").NoteRequest;
 const log = @import("log.zig");
 const logging = @import("zig-logging");
+const trace_module = @import("trace.zig");
 
 const Command = enum {
     create,
@@ -19,9 +20,12 @@ const Command = enum {
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
 
-    // 初始化日志系统
-    log.init(.info);
+    // 初始化日志系统 - 使用 trace 格式
+    try log.init(allocator, .info, .trace);
     defer log.deinit();
+
+    // 为当前命令生成 TraceId
+    _ = try trace_module.generateTraceId();
 
     log.info("app", "mowen-cli started", &.{});
 
