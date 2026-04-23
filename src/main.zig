@@ -6,6 +6,8 @@ const converter = @import("converter.zig");
 const uploader = @import("uploader.zig");
 const metadata = @import("metadata.zig");
 const NoteRequest = @import("note_atom.zig").NoteRequest;
+const log = @import("log.zig");
+const logging = @import("zig-logging");
 
 const Command = enum {
     create,
@@ -16,6 +18,12 @@ const Command = enum {
 
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
+
+    // 初始化日志系统
+    log.init(.info);
+    defer log.deinit();
+
+    log.info("app", "mowen-cli started", &.{});
 
     var args_iter = try std.process.Args.Iterator.initAllocator(init.minimal.args, allocator);
     defer args_iter.deinit();
@@ -40,10 +48,17 @@ pub fn main(init: std.process.Init) !void {
 
     // 解析子命令
     const command = parseCommand(first_arg.?) orelse {
+        log.err("app", "Unknown command", &.{
+            logging.LogField.string("command", first_arg.?),
+        });
         std.debug.print("Error: Unknown command '{s}'\n", .{first_arg.?});
         std.debug.print("Run 'mowen-cli --help' for usage information.\n", .{});
         return error.InvalidCommand;
     };
+
+    log.info("app", "Executing command", &.{
+        logging.LogField.string("command", @tagName(command)),
+    });
 
     // 根据子命令分发
     switch (command) {
@@ -106,9 +121,19 @@ fn handleCreate(init: std.process.Init, args_iter: *std.process.Args.Iterator) !
 
     // 检查文件是否存在
     std.Io.Dir.cwd().access(init.io, file, .{}) catch |err| {
+        log.err("create", "File not accessible", &.{
+            logging.LogField.string("file", file),
+            logging.LogField.string("error", @errorName(err)),
+        });
         std.debug.print("Error: File '{s}' not found or not accessible: {s}\n", .{ file, @errorName(err) });
         return error.FileNotFound;
     };
+
+    log.info("create", "Creating note from file", &.{
+        logging.LogField.string("file", file),
+        logging.LogField.boolean("auto_publish", auto_publish),
+        logging.LogField.boolean("dry_run", dry_run),
+    });
 
     // 加载配置
     const cli_args = config.CliArgs{
@@ -195,10 +220,19 @@ fn handleCreate(init: std.process.Init, args_iter: *std.process.Args.Iterator) !
 
     std.debug.print("Creating note from '{s}'...\n", .{file});
     const note_id = upload_client.upload(note_atom.doc.content, settings) catch |err| {
+        log.err("create", "Failed to create note", &.{
+            logging.LogField.string("file", file),
+            logging.LogField.string("error", @errorName(err)),
+        });
         std.debug.print("Error: Failed to create note: {s}\n", .{@errorName(err)});
         return err;
     };
     defer allocator.free(note_id);
+
+    log.info("create", "Note created successfully", &.{
+        logging.LogField.string("note_id", note_id),
+        logging.LogField.string("file", file),
+    });
 
     // 保存元数据
     const abs_path = try std.Io.Dir.cwd().realPathFileAlloc(init.io, file, allocator);
@@ -351,12 +385,26 @@ fn handleEdit(init: std.process.Init, args_iter: *std.process.Args.Iterator) !vo
     // 编辑笔记
     var upload_client = uploader.Uploader.init(allocator, init.io, cfg.api_key, cfg.api_endpoint);
 
+    log.info("edit", "Editing note", &.{
+        logging.LogField.string("note_id", meta.noteId),
+        logging.LogField.string("file", file),
+    });
+
     std.debug.print("Editing note '{s}'...\n", .{meta.noteId});
     const note_id = upload_client.editNote(meta.noteId, note_atom.doc.content) catch |err| {
+        log.err("edit", "Failed to edit note", &.{
+            logging.LogField.string("note_id", meta.noteId),
+            logging.LogField.string("error", @errorName(err)),
+        });
         std.debug.print("Error: Failed to edit note: {s}\n", .{@errorName(err)});
         return err;
     };
     defer allocator.free(note_id);
+
+    log.info("edit", "Note edited successfully", &.{
+        logging.LogField.string("note_id", note_id),
+        logging.LogField.string("file", file),
+    });
 
     // 更新元数据
     const now_ns = std.Io.Timestamp.now(init.io, .real).nanoseconds;

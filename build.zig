@@ -4,6 +4,13 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    // Import zig-logging dependency
+    const logging_dep = b.dependency("zig-logging", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const logging_module = logging_dep.module("zig-logging");
+
     // Create executable
     const exe = b.addExecutable(.{
         .name = "mowen-cli",
@@ -13,6 +20,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
+    exe.root_module.addImport("zig-logging", logging_module);
 
     b.installArtifact(exe);
 
