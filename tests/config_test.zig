@@ -676,7 +676,7 @@ test "Default values are used when not specified" {
     defer cfg.deinit();
 
     // Check defaults are applied
-    try testing.expect(std.mem.eql(u8, cfg.api_endpoint, "https://open.mowen.cn/api/open/api/v1/note/create"));
+    try testing.expect(std.mem.eql(u8, cfg.api_endpoint, "https://open.mowen.cn/api/open/api/v1"));
     try testing.expectEqual(@as(u32, 30000), cfg.timeout_ms);
     try testing.expectEqual(@as(usize, 0), cfg.default_tags.len);
     try testing.expectEqual(false, cfg.auto_publish);
