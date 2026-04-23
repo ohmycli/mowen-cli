@@ -17,12 +17,12 @@ test "Windows path resolution uses USERPROFILE" {
     var env_map = std.process.Environ.Map.init(allocator);
     defer env_map.deinit();
 
-    // Current implementation uses current directory, not USERPROFILE
-    const path = try config.getDefaultConfigPath(allocator, &env_map);
+    // Current implementation uses executable directory
+    const path = try config.getDefaultConfigPath(allocator, testing.io, &env_map);
     defer allocator.free(path);
 
-    // Should return "config.json" (current directory)
-    try testing.expectEqualStrings("config.json", path);
+    // Should return absolute path ending with "config.json"
+    try testing.expect(std.mem.endsWith(u8, path, "config.json"));
 }
 
 test "Unix path resolution uses HOME" {
@@ -35,12 +35,12 @@ test "Unix path resolution uses HOME" {
     var env_map = std.process.Environ.Map.init(allocator);
     defer env_map.deinit();
 
-    // Current implementation uses current directory, not HOME
-    const path = try config.getDefaultConfigPath(allocator, &env_map);
+    // Current implementation uses executable directory
+    const path = try config.getDefaultConfigPath(allocator, testing.io, &env_map);
     defer allocator.free(path);
 
-    // Should return "config.json" (current directory)
-    try testing.expectEqualStrings("config.json", path);
+    // Should return absolute path ending with "config.json"
+    try testing.expect(std.mem.endsWith(u8, path, "config.json"));
 }
 
 test "Missing environment variable returns HomeNotFound" {
@@ -49,11 +49,12 @@ test "Missing environment variable returns HomeNotFound" {
     var env_map = std.process.Environ.Map.init(allocator);
     defer env_map.deinit();
 
-    // Current implementation always returns "config.json", doesn't depend on env vars
-    const path = try config.getDefaultConfigPath(allocator, &env_map);
+    // Current implementation uses executable directory, doesn't depend on env vars
+    const path = try config.getDefaultConfigPath(allocator, testing.io, &env_map);
     defer allocator.free(path);
 
-    try testing.expectEqualStrings("config.json", path);
+    // Should return absolute path ending with "config.json"
+    try testing.expect(std.mem.endsWith(u8, path, "config.json"));
 }
 
 test "Custom config path is used when provided" {
