@@ -77,7 +77,7 @@ pub const HttpApi = struct {
 
         const body = try self.post(url, "application/json", json_str);
         defer self.allocator.free(body);
-        return try self.extractStringField(body, &.{ "noteId" });
+        return try self.extractStringField(body, &.{"noteId"});
     }
 
     fn editNoteImpl(ptr: *anyopaque, note_id: []const u8, content: []types.NoteAtom) anyerror![]const u8 {
@@ -102,7 +102,7 @@ pub const HttpApi = struct {
 
         const body = try self.post(edit_url, "application/json", json_str);
         defer self.allocator.free(body);
-        return try self.extractStringField(body, &.{ "noteId" });
+        return try self.extractStringField(body, &.{"noteId"});
     }
 
     fn setPrivacyImpl(ptr: *anyopaque, note_id: []const u8, is_public: []const u8) anyerror![]const u8 {
@@ -123,7 +123,7 @@ pub const HttpApi = struct {
 
         const body = try self.post(privacy_url, "application/json", json_str);
         defer self.allocator.free(body);
-        return try self.extractStringField(body, &.{ "noteId" });
+        return try self.extractStringField(body, &.{"noteId"});
     }
 
     fn uploadImageFromUrlImpl(ptr: *anyopaque, image_url: []const u8) anyerror![]const u8 {
@@ -192,9 +192,9 @@ pub const HttpApi = struct {
         const endpoint = try self.resolveUploadEndpoint(endpoint_raw);
         defer self.allocator.free(endpoint);
         const fields = try extractUploadFields(parsed.value);
-        var file_id = try extractOptionalStringFieldFromValue(self.allocator, fields, &.{ "x:file_id" });
+        var file_id = try extractOptionalStringFieldFromValue(self.allocator, fields, &.{"x:file_id"});
         if (file_id == null) {
-            file_id = try extractOptionalStringFieldFromValue(self.allocator, fields, &.{ "fileId" });
+            file_id = try extractOptionalStringFieldFromValue(self.allocator, fields, &.{"fileId"});
         }
         if (file_id == null) {
             file_id = try extractOptionalStringFieldFromValue(self.allocator, fields, &.{ "file", "fileId" });
@@ -281,21 +281,21 @@ pub const HttpApi = struct {
     }
 
     fn extractUploadEndpoint(self: *HttpApi, value: std.json.Value) ![]const u8 {
-        if (findValue(value, &.{ "endpoint" })) |endpoint| {
+        if (findValue(value, &.{"endpoint"})) |endpoint| {
             return switch (endpoint) {
                 .string => |s| try self.allocator.dupe(u8, s),
                 else => error.JsonParseFailed,
             };
         }
 
-        if (findValue(value, &.{ "url" })) |endpoint| {
+        if (findValue(value, &.{"url"})) |endpoint| {
             return switch (endpoint) {
                 .string => |s| try self.allocator.dupe(u8, s),
                 else => error.JsonParseFailed,
             };
         }
 
-        if (findValue(value, &.{ "action" })) |endpoint| {
+        if (findValue(value, &.{"action"})) |endpoint| {
             return switch (endpoint) {
                 .string => |s| try self.allocator.dupe(u8, s),
                 else => error.JsonParseFailed,
@@ -334,7 +334,7 @@ pub const HttpApi = struct {
             }
         }
 
-        if (findValue(value, &.{ "form" })) |form| {
+        if (findValue(value, &.{"form"})) |form| {
             switch (form) {
                 .object => return form,
                 else => {},
@@ -439,7 +439,8 @@ fn guessMimeType(path: []const u8) []const u8 {
 }
 
 fn appendMultipartField(allocator: std.mem.Allocator, body: *std.ArrayList(u8), boundary: []const u8, name: []const u8, value: []const u8) !void {
-    const field = try std.fmt.allocPrint(allocator,
+    const field = try std.fmt.allocPrint(
+        allocator,
         "--{s}\r\nContent-Disposition: form-data; name=\"{s}\"\r\n\r\n{s}\r\n",
         .{ boundary, name, value },
     );
@@ -505,8 +506,8 @@ test "prepare reply exposes file id for local image upload" {
     const parsed = try std.json.parseFromSlice(std.json.Value, allocator, body, .{ .ignore_unknown_fields = true });
     defer parsed.deinit();
 
-    const form = findValue(parsed.value, &.{ "form" }) orelse return error.TestUnexpectedResult;
-    const file_id = try extractOptionalStringFieldFromValue(allocator, form, &.{ "x:file_id" });
+    const form = findValue(parsed.value, &.{"form"}) orelse return error.TestUnexpectedResult;
+    const file_id = try extractOptionalStringFieldFromValue(allocator, form, &.{"x:file_id"});
     defer if (file_id) |id| allocator.free(id);
 
     try std.testing.expect(file_id != null);
