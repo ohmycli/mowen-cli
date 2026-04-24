@@ -9,8 +9,8 @@
             .hash = "logging-0.1.0-ddTPn1lQAgAEyZnaOisHqbmxPMBcwhD2njW3w5a8KR4h",
         },
         .@"zig-release" = .{
-            .url = "https://github.com/topaihub/zig-release/archive/530a3e3c1ba4e3396f4d614975786e0e5ef523f4.tar.gz",
-            .hash = "zig_release-0.1.0-nnPfHYotAACxTumo_qXALSglO6jrT6YFPxE5DAumf8_W",
+            .url = "https://github.com/topaihub/zig-release/archive/b4aaef15780d5c317b63f4fcff920c02190c836d.tar.gz",
+            .hash = "zig_release-0.1.0-nnPfHfQ5AACmR5zqN55Wikfu32Z0xGuVAySWNJtpQVeF",
         },
     },
     .paths = .{
