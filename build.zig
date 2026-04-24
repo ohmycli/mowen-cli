@@ -99,4 +99,18 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_config_tests.step);
     test_step.dependOn(&run_scanner_tests.step);
     test_step.dependOn(&run_parser_tests.step);
+
+    // zig build release -- patch|minor|major
+    const release_step = b.step("release", "Tag and push a new release (-- patch|minor|major)");
+    const release_exe = b.addExecutable(.{
+        .name = "zig-release",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/release.zig"),
+            .target = b.graph.host,
+        }),
+    });
+    const run_release = b.addRunArtifact(release_exe);
+    run_release.setCwd(b.path("."));
+    if (b.args) |a| run_release.addArgs(a);
+    release_step.dependOn(&run_release.step);
 }
