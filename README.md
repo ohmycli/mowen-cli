@@ -13,6 +13,7 @@ A command-line tool written in Zig for managing Markdown notes on the Mowen plat
 - ✅ **Tag management**: Add tags to notes
 - ✅ **Flexible configuration**: Config file / environment variables / CLI arguments
 - ✅ **Preview mode**: Dry-run mode without actual uploads
+- ✅ **Markdown image upload**: Auto-upload local and remote images embedded in Markdown
 - ✅ **Zero dependencies**: Single executable binary
 - ✅ **Cross-platform**: Windows/Linux/macOS
 
@@ -316,7 +317,7 @@ The following Markdown syntax is currently supported:
 - ✅ Paragraphs
 - ✅ Bold, italic
 - ✅ Links
-- ✅ Images (`![alt](src)`), including local files and remote URLs
+- ✅ Images (`![alt](src)`), including local files and remote URLs — auto-uploaded to Mowen
 - ✅ Lists (ordered, unordered)
 - ✅ Code blocks
 - ✅ Blockquotes
@@ -418,6 +419,7 @@ mowen-cli/
 │   ├── scanner.zig        # File scanning and reading
 │   ├── parser.zig         # Markdown lexing and parsing
 │   ├── converter.zig      # Markdown → NoteAtom conversion
+│   ├── image_uploader.zig # Image upload (local multipart + remote URL)
 │   ├── note_atom.zig      # Mowen note format definition and JSON serialization
 │   ├── uploader.zig       # API calls (create/edit/set-privacy)
 │   └── metadata.zig       # Metadata management (noteId tracking)
@@ -439,6 +441,17 @@ Issues and Pull Requests are welcome!
 MIT License
 
 ## Changelog
+
+### v0.2.0 (2026-04-24)
+
+**New Features**
+- ✅ **Markdown image upload**: `![alt](src)` images are automatically uploaded to Mowen
+  - Local images: multipart upload via `/upload/prepare`
+  - Remote images: URL upload via `/upload/url`
+  - Supported formats: gif, jpeg, jpg, png, webp
+  - Duplicate images are uploaded only once per session
+  - Images appear as block-level `image` nodes in Mowen notes
+- ✅ CI: GitHub Actions workflow for build/test/release
 
 ### v0.1.0 (2026-04-22)
 
