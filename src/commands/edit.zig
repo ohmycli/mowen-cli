@@ -2,6 +2,7 @@ const std = @import("std");
 const App = @import("../app.zig").App;
 const scanner = @import("../scanner.zig");
 const converter = @import("../converter.zig");
+const image_uploader = @import("../image_uploader.zig");
 const metadata = @import("../metadata.zig");
 const log = @import("../log.zig");
 const logging = @import("zig-logging");
@@ -77,13 +78,6 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
         return error.MetadataNotFound;
     };
 
-    if (dry_run) {
-        std.debug.print("[DRY RUN] Would edit note '{s}'\n", .{meta.noteId});
-        std.debug.print("  File: {s}\n", .{file});
-        std.debug.print("  Note ID: {s}\n", .{meta.noteId});
-        return;
-    }
-
     // Read file
     const content = scanner.readFileContent(allocator, io, file) catch |err| {
         std.debug.print("Error: Failed to read file '{s}': {s}\n", .{ file, @errorName(err) });
@@ -91,8 +85,18 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     };
     defer allocator.free(content);
 
+    var image_uploader_ctx: ?image_uploader.ImageUploader = null;
+    defer if (image_uploader_ctx) |*ctx| ctx.deinit();
+
+    var preview_resolver = image_uploader.PreviewImageResolver.init(allocator);
+    const base_dir = std.fs.path.dirname(file) orelse ".";
+    const image_resolver = if (dry_run) preview_resolver.parserResolver() else blk: {
+        image_uploader_ctx = try image_uploader.ImageUploader.init(allocator, io, app.api, &meta_store, base_dir);
+        break :blk image_uploader_ctx.?.parserResolver();
+    };
+
     // Convert
-    const note_atom = converter.convertMarkdownToNoteAtom(allocator, content) catch |err| {
+    const note_atom = converter.convertMarkdownToNoteAtomWithResolver(allocator, content, image_resolver) catch |err| {
         std.debug.print("Error: Failed to convert markdown: {s}\n", .{@errorName(err)});
         return err;
     };
@@ -104,6 +108,13 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
             },
             else => {},
         }
+    }
+
+    if (dry_run) {
+        std.debug.print("[DRY RUN] Would edit note '{s}'\n", .{meta.noteId});
+        std.debug.print("  File: {s}\n", .{file});
+        std.debug.print("  Note ID: {s}\n", .{meta.noteId});
+        return;
     }
 
     try meta_store.ensureRateLimit(io);

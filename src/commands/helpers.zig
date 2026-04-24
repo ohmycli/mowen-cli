@@ -42,6 +42,10 @@ pub fn freeNoteAtom(allocator: std.mem.Allocator, atom: NoteAtom) void {
             for (quote.content) |child| freeNoteAtom(allocator, child);
             allocator.free(quote.content);
         },
+        .image => |image| {
+            allocator.free(image.attrs.uuid);
+            allocator.free(image.attrs.alt);
+        },
         .doc => |doc| {
             for (doc.content) |child| freeNoteAtom(allocator, child);
             allocator.free(doc.content);

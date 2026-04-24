@@ -2,7 +2,11 @@
 zig-out/
 zig-cache/
 .zig-cache/
+.zig-cache-global/
 zig-pkg/
+
+# Local Codex workspace artifacts
+.codex-tmp/
 
 # Configuration files with sensitive data
 config.json
