@@ -1,5 +1,5 @@
 const std = @import("std");
-const NoteAtom = @import("core/types.zig").NoteAtom;
+pub const NoteAtom = @import("core/types.zig").NoteAtom;
 
 pub const Token = union(enum) {
     heading: struct { level: u8, text: []const u8 },
@@ -12,9 +12,29 @@ pub const Token = union(enum) {
     horizontal_rule: void,
 };
 
+pub const ImageResolver = struct {
+    ctx: *anyopaque,
+    resolve: *const fn (ctx: *anyopaque, source: []const u8, alt: []const u8) anyerror![]const u8,
+};
+
+pub const InlineToken = union(enum) {
+    text: []const u8,
+    bold: []const u8,
+    link: struct { text: []const u8, url: []const u8 },
+    image: struct { alt: []const u8, src: []const u8 },
+};
+
+pub const BlockWrapper = enum {
+    paragraph,
+    quote,
+};
+
 pub fn tokenize(allocator: std.mem.Allocator, content: []const u8) ![]Token {
     var tokens = std.ArrayList(Token).empty;
-    errdefer tokens.deinit(allocator);
+    errdefer {
+        freeTokenPayloads(allocator, tokens.items);
+        tokens.deinit(allocator);
+    }
 
     var lines = std.mem.splitScalar(u8, content, '\n');
     var current_para = std.ArrayList(u8).empty;
@@ -117,20 +137,61 @@ pub fn tokenize(allocator: std.mem.Allocator, content: []const u8) ![]Token {
     return tokens.toOwnedSlice(allocator);
 }
 
-fn parseInlineMarkup(allocator: std.mem.Allocator, text: []const u8) ![]NoteAtom {
-    var atoms = std.ArrayList(NoteAtom).empty;
-    errdefer atoms.deinit(allocator);
+fn parseInlineMarkup(allocator: std.mem.Allocator, text: []const u8) ![]InlineToken {
+    var tokens = std.ArrayList(InlineToken).empty;
+    errdefer {
+        freeInlineTokenPayloads(allocator, tokens.items);
+        tokens.deinit(allocator);
+    }
 
     var i: usize = 0;
     var current_text = std.ArrayList(u8).empty;
     defer current_text.deinit(allocator);
 
+    const flushText = struct {
+        fn run(alloc: std.mem.Allocator, out_tokens: *std.ArrayList(InlineToken), text_buf: *std.ArrayList(u8)) !void {
+            if (text_buf.items.len == 0) return;
+            var text_opt: ?[]const u8 = try text_buf.toOwnedSlice(alloc);
+            errdefer if (text_opt) |value| alloc.free(value);
+            try out_tokens.append(alloc, .{ .text = text_opt.? });
+            text_opt = null;
+            text_buf.clearRetainingCapacity();
+        }
+    }.run;
+
     while (i < text.len) {
-        if (i + 1 < text.len and text[i] == '*' and text[i + 1] == '*') {
-            if (current_text.items.len > 0) {
-                try atoms.append(allocator, .{ .text = .{ .text = try current_text.toOwnedSlice(allocator) } });
-                current_text.clearRetainingCapacity();
+        if (i + 1 < text.len and text[i] == '!' and text[i + 1] == '[') {
+            try flushText(allocator, &tokens, &current_text);
+
+            i += 2;
+            const alt_start = i;
+            while (i < text.len and text[i] != ']') : (i += 1) {}
+
+            if (i < text.len and i + 1 < text.len and text[i + 1] == '(') {
+                const alt = text[alt_start..i];
+                i += 2;
+                const src_start = i;
+                while (i < text.len and text[i] != ')') : (i += 1) {}
+
+                if (i < text.len) {
+                    var src_opt: ?[]const u8 = try allocator.dupe(u8, text[src_start..i]);
+                    errdefer if (src_opt) |src_copy| allocator.free(src_copy);
+                    var alt_opt: ?[]const u8 = try allocator.dupe(u8, alt);
+                    errdefer if (alt_opt) |alt_copy| allocator.free(alt_copy);
+                    try tokens.append(allocator, .{ .image = .{
+                        .alt = alt_opt.?,
+                        .src = src_opt.?,
+                    } });
+                    src_opt = null;
+                    alt_opt = null;
+                    i += 1;
+                }
             }
+            continue;
+        }
+
+        if (i + 1 < text.len and text[i] == '*' and text[i + 1] == '*') {
+            try flushText(allocator, &tokens, &current_text);
 
             i += 2;
             const start = i;
@@ -139,23 +200,17 @@ fn parseInlineMarkup(allocator: std.mem.Allocator, text: []const u8) ![]NoteAtom
             }
 
             if (i + 1 < text.len) {
-                const bold_text = try allocator.dupe(u8, text[start..i]);
-                const marks = try allocator.alloc(NoteAtom.Mark, 1);
-                marks[0] = .{ .bold = {} };
-                try atoms.append(allocator, .{ .text = .{
-                    .text = bold_text,
-                    .marks = marks,
-                } });
+                var bold_opt: ?[]const u8 = try allocator.dupe(u8, text[start..i]);
+                errdefer if (bold_opt) |bold_text| allocator.free(bold_text);
+                try tokens.append(allocator, .{ .bold = bold_opt.? });
+                bold_opt = null;
                 i += 2;
             }
             continue;
         }
 
         if (text[i] == '[') {
-            if (current_text.items.len > 0) {
-                try atoms.append(allocator, .{ .text = .{ .text = try current_text.toOwnedSlice(allocator) } });
-                current_text.clearRetainingCapacity();
-            }
+            try flushText(allocator, &tokens, &current_text);
 
             i += 1;
             const text_start = i;
@@ -168,14 +223,16 @@ fn parseInlineMarkup(allocator: std.mem.Allocator, text: []const u8) ![]NoteAtom
                 while (i < text.len and text[i] != ')') : (i += 1) {}
 
                 if (i < text.len) {
-                    const url = try allocator.dupe(u8, text[url_start..i]);
-                    const link_text_copy = try allocator.dupe(u8, link_text);
-                    const marks = try allocator.alloc(NoteAtom.Mark, 1);
-                    marks[0] = .{ .link = .{ .href = url } };
-                    try atoms.append(allocator, .{ .text = .{
-                        .text = link_text_copy,
-                        .marks = marks,
+                    var url_opt: ?[]const u8 = try allocator.dupe(u8, text[url_start..i]);
+                    errdefer if (url_opt) |url_copy| allocator.free(url_copy);
+                    var link_text_opt: ?[]const u8 = try allocator.dupe(u8, link_text);
+                    errdefer if (link_text_opt) |link_text_copy| allocator.free(link_text_copy);
+                    try tokens.append(allocator, .{ .link = .{
+                        .text = link_text_opt.?,
+                        .url = url_opt.?,
                     } });
+                    url_opt = null;
+                    link_text_opt = null;
                     i += 1;
                 }
             }
@@ -186,43 +243,47 @@ fn parseInlineMarkup(allocator: std.mem.Allocator, text: []const u8) ![]NoteAtom
         i += 1;
     }
 
-    if (current_text.items.len > 0) {
-        try atoms.append(allocator, .{ .text = .{ .text = try current_text.toOwnedSlice(allocator) } });
-    }
+    try flushText(allocator, &tokens, &current_text);
 
-    return atoms.toOwnedSlice(allocator);
+    return tokens.toOwnedSlice(allocator);
 }
 
 pub fn tokensToNoteAtoms(allocator: std.mem.Allocator, tokens: []Token) ![]NoteAtom {
+    return try tokensToNoteAtomsWithResolver(allocator, tokens, null);
+}
+
+pub fn tokensToNoteAtomsWithResolver(
+    allocator: std.mem.Allocator,
+    tokens: []Token,
+    image_resolver: ?ImageResolver,
+) ![]NoteAtom {
     var atoms = std.ArrayList(NoteAtom).empty;
-    errdefer atoms.deinit(allocator);
+    errdefer {
+        freeAtomPayloads(allocator, atoms.items);
+        atoms.deinit(allocator);
+    }
+    defer freeTokenPayloads(allocator, tokens);
 
     for (tokens) |token| {
         switch (token) {
             .heading => |h| {
-                const inline_content = try parseInlineMarkup(allocator, h.text);
-                try atoms.append(allocator, .{ .paragraph = .{ .content = inline_content } });
-                allocator.free(h.text);
+                try appendInlinePieces(allocator, &atoms, try parseInlineMarkup(allocator, h.text), .paragraph, image_resolver);
             },
             .paragraph => |p| {
-                const inline_content = try parseInlineMarkup(allocator, p);
-                try atoms.append(allocator, .{ .paragraph = .{ .content = inline_content } });
-                allocator.free(p);
+                try appendInlinePieces(allocator, &atoms, try parseInlineMarkup(allocator, p), .paragraph, image_resolver);
             },
             .quote => |q| {
-                const inline_content = try parseInlineMarkup(allocator, q);
-                const quote_content = try allocator.alloc(NoteAtom, 1);
-                quote_content[0] = .{ .paragraph = .{ .content = inline_content } };
-                try atoms.append(allocator, .{ .quote = .{ .content = quote_content } });
-                allocator.free(q);
+                try appendInlinePieces(allocator, &atoms, try parseInlineMarkup(allocator, q), .quote, image_resolver);
             },
             .code_block => |cb| {
-                const code_text = try allocator.alloc(NoteAtom, 1);
-                code_text[0] = .{ .text = .{ .text = cb.code } };
+                var code_text_opt: ?[]NoteAtom = try allocator.alloc(NoteAtom, 1);
+                errdefer if (code_text_opt) |value| allocator.free(value);
+                code_text_opt.?[0] = .{ .text = .{ .text = cb.code } };
                 try atoms.append(allocator, .{ .codeblock = .{
                     .attrs = .{ .language = cb.language },
-                    .content = code_text,
+                    .content = code_text_opt.?,
                 } });
+                code_text_opt = null;
             },
             .horizontal_rule => {
                 try atoms.append(allocator, .{ .horizontal_rule = {} });
@@ -232,4 +293,208 @@ pub fn tokensToNoteAtoms(allocator: std.mem.Allocator, tokens: []Token) ![]NoteA
     }
 
     return atoms.toOwnedSlice(allocator);
+}
+
+fn appendInlinePieces(
+    allocator: std.mem.Allocator,
+    atoms: *std.ArrayList(NoteAtom),
+    pieces: []InlineToken,
+    wrapper: BlockWrapper,
+    image_resolver: ?ImageResolver,
+) !void {
+    defer freeInlineTokens(allocator, pieces);
+
+    var content: std.ArrayList(NoteAtom) = .empty;
+    errdefer {
+        freeAtomPayloads(allocator, content.items);
+        content.deinit(allocator);
+    }
+
+    for (pieces) |piece| {
+        switch (piece) {
+            .text => |text| {
+                try appendTextAtom(allocator, &content, text, &[_]NoteAtom.Mark{});
+            },
+            .bold => |text| {
+                var marks_opt: ?[]NoteAtom.Mark = try allocator.alloc(NoteAtom.Mark, 1);
+                errdefer if (marks_opt) |marks| allocator.free(marks);
+                marks_opt.?[0] = .{ .bold = {} };
+                try appendTextAtom(allocator, &content, text, marks_opt.?);
+                marks_opt = null;
+            },
+            .link => |link| {
+                var marks_opt: ?[]NoteAtom.Mark = try allocator.alloc(NoteAtom.Mark, 1);
+                errdefer if (marks_opt) |marks| allocator.free(marks);
+                marks_opt.?[0] = .{ .link = .{ .href = link.url } };
+                try appendTextAtom(allocator, &content, link.text, marks_opt.?);
+                marks_opt = null;
+            },
+            .image => |image| {
+                if (content.items.len > 0) {
+                    var wrapped_opt: ?[]NoteAtom = try content.toOwnedSlice(allocator);
+                    errdefer if (wrapped_opt) |wrapped| freeCollectedAtoms(allocator, wrapped);
+                    try appendWrappedBlock(allocator, atoms, wrapper, wrapped_opt.?);
+                    wrapped_opt = null;
+                }
+
+                const resolver = image_resolver orelse return error.ImageResolverRequired;
+                var file_id_opt: ?[]const u8 = try resolver.resolve(resolver.ctx, image.src, image.alt);
+                errdefer if (file_id_opt) |file_id| allocator.free(file_id);
+                var alt_opt: ?[]const u8 = try allocator.dupe(u8, image.alt);
+                errdefer if (alt_opt) |alt| allocator.free(alt);
+                try atoms.append(allocator, .{ .image = .{
+                    .attrs = .{
+                        .uuid = file_id_opt.?,
+                        .alt = alt_opt.?,
+                        .@"align" = "center",
+                    },
+                } });
+                file_id_opt = null;
+                alt_opt = null;
+            },
+        }
+    }
+
+    if (content.items.len > 0) {
+        var wrapped_opt: ?[]NoteAtom = try content.toOwnedSlice(allocator);
+        errdefer if (wrapped_opt) |wrapped| freeCollectedAtoms(allocator, wrapped);
+        try appendWrappedBlock(allocator, atoms, wrapper, wrapped_opt.?);
+        wrapped_opt = null;
+    }
+}
+
+fn appendTextAtom(
+    allocator: std.mem.Allocator,
+    content: *std.ArrayList(NoteAtom),
+    text: []const u8,
+    marks: []NoteAtom.Mark,
+) !void {
+    const duplicated_text = try allocator.dupe(u8, text);
+    errdefer allocator.free(duplicated_text);
+
+    try content.append(allocator, .{ .text = .{
+        .text = duplicated_text,
+        .marks = marks,
+    } });
+}
+
+fn appendWrappedBlock(
+    allocator: std.mem.Allocator,
+    atoms: *std.ArrayList(NoteAtom),
+    wrapper: BlockWrapper,
+    content: []NoteAtom,
+) !void {
+    switch (wrapper) {
+        .paragraph => try atoms.append(allocator, .{ .paragraph = .{ .content = content } }),
+        .quote => {
+            var quote_content: ?[]NoteAtom = try allocator.alloc(NoteAtom, 1);
+            errdefer if (quote_content) |value| allocator.free(value);
+            quote_content.?[0] = .{ .paragraph = .{ .content = content } };
+            try atoms.append(allocator, .{ .quote = .{ .content = quote_content.? } });
+            quote_content = null;
+        },
+    }
+}
+
+fn freeCollectedAtoms(allocator: std.mem.Allocator, atoms: []NoteAtom) void {
+    for (atoms) |atom| {
+        freeAtom(allocator, atom);
+    }
+    allocator.free(atoms);
+}
+
+fn freeAtomPayloads(allocator: std.mem.Allocator, atoms: []NoteAtom) void {
+    for (atoms) |atom| {
+        freeAtom(allocator, atom);
+    }
+}
+
+fn freeTokenPayloads(allocator: std.mem.Allocator, tokens: []Token) void {
+    for (tokens) |token| {
+        switch (token) {
+            .heading => |h| allocator.free(h.text),
+            .paragraph => |p| allocator.free(p),
+            .bold => |b| allocator.free(b),
+            .quote => |q| allocator.free(q),
+            .link => |l| {
+                allocator.free(l.text);
+                allocator.free(l.url);
+            },
+            .code_block => |cb| {
+                allocator.free(cb.language);
+                allocator.free(cb.code);
+            },
+            else => {},
+        }
+    }
+}
+
+fn freeAtom(allocator: std.mem.Allocator, atom: NoteAtom) void {
+    switch (atom) {
+        .text => |text| {
+            allocator.free(text.text);
+            if (text.marks.len > 0) {
+                for (text.marks) |mark| {
+                    switch (mark) {
+                        .link => |link| allocator.free(link.href),
+                        .bold => {},
+                    }
+                }
+                allocator.free(text.marks);
+            }
+        },
+        .paragraph => |para| {
+            freeCollectedAtoms(allocator, para.content);
+        },
+        .quote => |quote| {
+            freeCollectedAtoms(allocator, quote.content);
+        },
+        .image => |image| {
+            allocator.free(image.attrs.uuid);
+            allocator.free(image.attrs.alt);
+        },
+        .codeblock => |cb| {
+            allocator.free(cb.attrs.language);
+            freeCollectedAtoms(allocator, cb.content);
+        },
+        .doc => |doc| {
+            freeCollectedAtoms(allocator, doc.content);
+        },
+        .horizontal_rule => {},
+    }
+}
+
+fn freeInlineTokens(allocator: std.mem.Allocator, tokens: []InlineToken) void {
+    for (tokens) |token| {
+        switch (token) {
+            .text => |text| allocator.free(text),
+            .bold => |text| allocator.free(text),
+            .link => |link| {
+                allocator.free(link.text);
+                allocator.free(link.url);
+            },
+            .image => |image| {
+                allocator.free(image.alt);
+                allocator.free(image.src);
+            },
+        }
+    }
+    allocator.free(tokens);
+}
+
+fn freeInlineTokenPayloads(allocator: std.mem.Allocator, tokens: []InlineToken) void {
+    for (tokens) |token| {
+        switch (token) {
+            .text => |text| allocator.free(text),
+            .bold => |text| allocator.free(text),
+            .link => |link| {
+                allocator.free(link.text);
+                allocator.free(link.url);
+            },
+            .image => |image| {
+                allocator.free(image.alt);
+                allocator.free(image.src);
+            },
+        }
+    }
 }

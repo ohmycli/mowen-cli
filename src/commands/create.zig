@@ -3,6 +3,7 @@ const App = @import("../app.zig").App;
 const config = @import("../config.zig");
 const scanner = @import("../scanner.zig");
 const converter = @import("../converter.zig");
+const image_uploader = @import("../image_uploader.zig");
 const metadata = @import("../metadata.zig");
 const types = @import("../core/types.zig");
 const log = @import("../log.zig");
@@ -92,8 +93,23 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     };
     defer allocator.free(content);
 
+    // Init metadata
+    var meta_store = metadata.MetadataStore.init(allocator);
+    defer meta_store.deinit(io);
+    try meta_store.load(io);
+
+    var image_uploader_ctx: ?image_uploader.ImageUploader = null;
+    defer if (image_uploader_ctx) |*ctx| ctx.deinit();
+
+    var preview_resolver = image_uploader.PreviewImageResolver.init(allocator);
+    const base_dir = std.fs.path.dirname(file) orelse ".";
+    const image_resolver = if (dry_run) preview_resolver.parserResolver() else blk: {
+        image_uploader_ctx = try image_uploader.ImageUploader.init(allocator, io, app.api, &meta_store, base_dir);
+        break :blk image_uploader_ctx.?.parserResolver();
+    };
+
     // Convert to NoteAtom
-    const note_atom = converter.convertMarkdownToNoteAtom(allocator, content) catch |err| {
+    const note_atom = converter.convertMarkdownToNoteAtomWithResolver(allocator, content, image_resolver) catch |err| {
         std.debug.print("Error: Failed to convert markdown: {s}\n", .{@errorName(err)});
         return err;
     };
@@ -106,11 +122,6 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
             else => {},
         }
     }
-
-    // Init metadata
-    var meta_store = metadata.MetadataStore.init(allocator);
-    defer meta_store.deinit(io);
-    try meta_store.load(io);
 
     if (dry_run) {
         std.debug.print("[DRY RUN] Would create note from '{s}'\n", .{file});

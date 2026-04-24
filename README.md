@@ -316,6 +316,7 @@ The following Markdown syntax is currently supported:
 - ✅ Paragraphs
 - ✅ Bold, italic
 - ✅ Links
+- ✅ Images (`![alt](src)`), including local files and remote URLs
 - ✅ Lists (ordered, unordered)
 - ✅ Code blocks
 - ✅ Blockquotes

@@ -2,6 +2,7 @@ const std = @import("std");
 const App = @import("../app.zig").App;
 const scanner = @import("../scanner.zig");
 const converter = @import("../converter.zig");
+const image_uploader = @import("../image_uploader.zig");
 const metadata = @import("../metadata.zig");
 const types = @import("../core/types.zig");
 const freeNoteAtom = @import("helpers.zig").freeNoteAtom;
@@ -93,7 +94,13 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
         };
         defer allocator.free(content);
 
-        const note_atom = converter.convertMarkdownToNoteAtom(allocator, content) catch |err| {
+        var image_uploader_ctx: ?image_uploader.ImageUploader = null;
+        defer if (image_uploader_ctx) |*ctx| ctx.deinit();
+
+        const base_dir = std.fs.path.dirname(file) orelse ".";
+        image_uploader_ctx = try image_uploader.ImageUploader.init(allocator, io, app.api, &meta_store, base_dir);
+
+        const note_atom = converter.convertMarkdownToNoteAtomWithResolver(allocator, content, image_uploader_ctx.?.parserResolver()) catch |err| {
             std.debug.print(" FAILED ({s})\n", .{@errorName(err)});
             fail_count += 1;
             continue;

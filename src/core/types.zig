@@ -5,6 +5,7 @@ pub const NoteAtom = union(enum) {
     paragraph: Paragraph,
     text: Text,
     quote: Quote,
+    image: Image,
     codeblock: CodeBlock,
     horizontal_rule: void,
 
@@ -23,6 +24,16 @@ pub const NoteAtom = union(enum) {
 
     pub const Quote = struct {
         content: []NoteAtom,
+    };
+
+    pub const Image = struct {
+        attrs: Attrs,
+
+        pub const Attrs = struct {
+            uuid: []const u8,
+            alt: []const u8 = "",
+            @"align": []const u8 = "center",
+        };
     };
 
     pub const CodeBlock = struct {
@@ -111,6 +122,21 @@ pub const NoteAtom = union(enum) {
                     try item.jsonStringify(writer);
                 }
                 try writer.endArray();
+                try writer.endObject();
+            },
+            .image => |image| {
+                try writer.beginObject();
+                try writer.objectField("type");
+                try writer.write("image");
+                try writer.objectField("attrs");
+                try writer.beginObject();
+                try writer.objectField("uuid");
+                try writer.write(image.attrs.uuid);
+                try writer.objectField("alt");
+                try writer.write(image.attrs.alt);
+                try writer.objectField("align");
+                try writer.write(image.attrs.@"align");
+                try writer.endObject();
                 try writer.endObject();
             },
             .codeblock => |cb| {
