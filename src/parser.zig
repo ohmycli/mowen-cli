@@ -325,8 +325,8 @@ fn appendInlinePieces(
             .link => |link| {
                 var marks_opt: ?[]NoteAtom.Mark = try allocator.alloc(NoteAtom.Mark, 1);
                 errdefer if (marks_opt) |marks| allocator.free(marks);
-                marks_opt.?[0] = .{ .link = .{ .href = link.url } };
-                try appendTextAtom(allocator, &content, link.text, marks_opt.?);
+                marks_opt.?[0] = .{ .link = .{ .href = try allocator.dupe(u8, link.url) } };
+                try appendTextAtom(allocator, &content, try allocator.dupe(u8, link.text), marks_opt.?);
                 marks_opt = null;
             },
             .image => |image| {
