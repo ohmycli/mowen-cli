@@ -29,10 +29,5 @@ Thumbs.db
 *.log
 .mowen/
 
-# AI assistant files
-CLAUDE.md
-AGENTS.md
-references/
-
 # Legacy copy
 mowen-cli-latest/
