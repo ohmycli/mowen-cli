@@ -45,7 +45,7 @@ pub fn main(init: std.process.Init) !void {
         return;
     }
     if (std.mem.eql(u8, first_arg, "--version") or std.mem.eql(u8, first_arg, "-v")) {
-        std.debug.print("mowen-cli version 0.1.0\n", .{});
+        std.debug.print("mowen-cli version 0.3.1\n", .{});
         return;
     }
 

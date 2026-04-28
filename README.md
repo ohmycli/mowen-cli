@@ -439,6 +439,12 @@ MIT License
 
 ## Changelog
 
+### v0.3.1 (2026-04-29)
+
+**Improvements**
+- ✅ Console and trace logs now emit ANSI colors by default.
+- ✅ `mowen-cli --version` now reports `0.3.1`.
+
 ### v0.1.0 (2026-04-22)
 
 **Core Features**

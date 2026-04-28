@@ -16,15 +16,21 @@ pub fn init(alloc: std.mem.Allocator, min_level: logging.LogLevel, style: LogSty
     const config: logging.LogConfig = switch (style) {
         .pretty => .{
             .level = min_level,
-            .console = .{ .style = .pretty },
+            .console = .{
+                .style = .pretty,
+                .color_mode = .always,
+            },
         },
         .compact => .{
             .level = min_level,
-            .console = .{ .style = .compact },
+            .console = .{
+                .style = .compact,
+                .color_mode = .always,
+            },
         },
         .trace => .{
             .level = min_level,
-            .trace_console = .{ .color_mode = .auto },
+            .trace_console = .{ .color_mode = .always },
             .trace_file = .{
                 .path = "mowen-cli.log",
                 .max_bytes = null,
