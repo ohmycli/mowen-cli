@@ -13,7 +13,8 @@
             .hash = "zig_release-0.1.0-nnPfHfQ5AACmR5zqN55Wikfu32Z0xGuVAySWNJtpQVeF",
         },
         .@"mowen-parser" = .{
-            .path = "../mowen-parser",
+            .url = "https://github.com/ohmycli/mowen-parser/archive/01846a161c550543d8af4b4f570e918754d78776.tar.gz",
+            .hash = "mowen_parser-0.1.0-hsOmjL-RAABco9wWNfDqhgFDBBrBu52PzWTt1pc2S4Mk",
         },
     },
     .paths = .{
