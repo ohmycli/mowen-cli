@@ -24,7 +24,7 @@ pub fn init(alloc: std.mem.Allocator, min_level: logging.LogLevel, style: LogSty
         },
         .trace => .{
             .level = min_level,
-            .trace_console = .{},
+            .trace_console = .{ .color_mode = .auto },
             .trace_file = .{
                 .path = "mowen-cli.log",
                 .max_bytes = null,

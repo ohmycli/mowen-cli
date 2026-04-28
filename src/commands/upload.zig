@@ -1,10 +1,9 @@
 const std = @import("std");
 const App = @import("../app.zig").App;
 const scanner = @import("../scanner.zig");
-const converter = @import("../converter.zig");
-const image_uploader = @import("../image_uploader.zig");
+const converter = @import("mowen-parser");
 const metadata = @import("../metadata.zig");
-const types = @import("../core/types.zig");
+const types = @import("../core/api.zig");
 const freeNoteAtom = @import("helpers.zig").freeNoteAtom;
 const normalizePath = @import("helpers.zig").normalizePath;
 
@@ -94,13 +93,7 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
         };
         defer allocator.free(content);
 
-        var image_uploader_ctx: ?image_uploader.ImageUploader = null;
-        defer if (image_uploader_ctx) |*ctx| ctx.deinit();
-
-        const base_dir = std.fs.path.dirname(file) orelse ".";
-        image_uploader_ctx = try image_uploader.ImageUploader.init(allocator, io, app.api, &meta_store, base_dir);
-
-        const note_atom = converter.convertMarkdownToNoteAtomWithResolver(allocator, content, image_uploader_ctx.?.parserResolver()) catch |err| {
+        const note_atom = converter.convert(allocator, content) catch |err| {
             std.debug.print(" FAILED ({s})\n", .{@errorName(err)});
             fail_count += 1;
             continue;

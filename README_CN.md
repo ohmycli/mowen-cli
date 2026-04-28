@@ -13,7 +13,6 @@
 - ✅ **标签管理**：支持为笔记添加标签
 - ✅ **灵活配置**：配置文件/环境变量/命令行参数
 - ✅ **预览模式**：dry-run 模式，不实际上传
-- ✅ **Markdown 图片上传**：自动上传 Markdown 中内嵌的本地和远程图片
 - ✅ **零依赖**：单文件可执行程序
 - ✅ **跨平台**：Windows/Linux/macOS
 
@@ -317,7 +316,6 @@ Examples:
 - ✅ 段落
 - ✅ 粗体、斜体
 - ✅ 链接
-- ✅ 图片（`![alt](src)`），支持本地文件和远程 URL 自动上传
 - ✅ 列表（有序、无序）
 - ✅ 代码块
 - ✅ 引用
@@ -419,7 +417,6 @@ mowen-cli/
 │   ├── scanner.zig        # 文件扫描和读取
 │   ├── parser.zig         # Markdown 词法和语法解析
 │   ├── converter.zig      # Markdown → NoteAtom 转换
-│   ├── image_uploader.zig # 图片上传（本地 multipart + 远程 URL）
 │   ├── note_atom.zig      # 墨问笔记格式定义和 JSON 序列化
 │   ├── uploader.zig       # API 调用（create/edit/set-privacy）
 │   └── metadata.zig       # 元数据管理（noteId 追踪）
@@ -441,17 +438,6 @@ mowen-cli/
 MIT License
 
 ## 更新日志
-
-### v0.2.0 (2026-04-24)
-
-**新功能**
-- ✅ **Markdown 图片上传**：`![alt](src)` 图片自动上传到墨问
-  - 本地图片：通过 `/upload/prepare` multipart 上传
-  - 远程图片：通过 `/upload/url` URL 上传
-  - 支持格式：gif、jpeg、jpg、png、webp
-  - 同一会话内重复图片只上传一次
-  - 图片在墨问笔记中显示为 block 级 `image` 节点
-- ✅ CI：GitHub Actions 工作流（构建/测试/发布）
 
 ### v0.1.0 (2026-04-22)
 

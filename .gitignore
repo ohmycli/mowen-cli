@@ -2,11 +2,7 @@
 zig-out/
 zig-cache/
 .zig-cache/
-.zig-cache-global/
 zig-pkg/
-
-# Local Codex workspace artifacts
-.codex-tmp/
 
 # Configuration files with sensitive data
 config.json
@@ -29,13 +25,14 @@ Thumbs.db
 # Kiro artifacts
 .kiro/
 
-# OpenSpec working directory (optional - remove if you want to track changes)
-openspec/changes/
-
 # Runtime files
 *.log
 .mowen/
 
-# Runtime files
-*.log
-.mowen/
+# AI assistant files
+CLAUDE.md
+AGENTS.md
+references/
+
+# Legacy copy
+mowen-cli-latest/

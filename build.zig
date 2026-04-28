@@ -11,6 +11,13 @@ pub fn build(b: *std.Build) void {
     });
     const logging_module = logging_dep.module("zig-logging");
 
+    // Import mowen-parser dependency
+    const parser_dep = b.dependency("mowen-parser", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const parser_module = parser_dep.module("mowen-parser");
+
     // Create executable
     const exe = b.addExecutable(.{
         .name = "mowen-cli",
@@ -20,6 +27,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "zig-logging", .module = logging_module },
+                .{ .name = "mowen-parser", .module = parser_module },
             },
         }),
     });
@@ -49,11 +57,6 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const parser_module = b.createModule(.{
-        .root_source_file = b.path("src/parser.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
 
     // Config tests
     const config_tests = b.addTest(.{
@@ -80,27 +83,14 @@ pub fn build(b: *std.Build) void {
     });
 
     // Parser tests
-    const parser_tests = b.addTest(.{
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("tests/parser_test.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{
-                .{ .name = "parser", .module = parser_module },
-            },
-        }),
-    });
 
     const run_config_tests = b.addRunArtifact(config_tests);
     const run_scanner_tests = b.addRunArtifact(scanner_tests);
-    const run_parser_tests = b.addRunArtifact(parser_tests);
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_config_tests.step);
     test_step.dependOn(&run_scanner_tests.step);
-    test_step.dependOn(&run_parser_tests.step);
 
-    // Release tool (from zig-release dependency)
     const release_dep = b.dependency("zig-release", .{});
     const zig_release = @import("zig-release");
     zig_release.addReleaseStep(b, release_dep, .{});
