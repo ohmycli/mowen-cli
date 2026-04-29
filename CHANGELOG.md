@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.3.1](https://github.com/ohmycli/mowen-cli/compare/v0.3.0...v0.3.1) (2026-04-29)
+
+### ✨ 新功能
+
+- feat(log): default to colored console output ([ffbedc9](https://github.com/ohmycli/mowen-cli/commit/ffbedc9fe030a1ff45c79ae4ca3c4178b750c2d7))
+
+### 🏗️ 构建
+
+- build(release): adopt configurable zig-release workflow ([de0cc9c](https://github.com/ohmycli/mowen-cli/commit/de0cc9cdf96d3dcd237b984f274441e551e2fb7c))
+
+
 ## [v0.1.0](https://github.com/ohmycli/mowen-cli/releases/tag/v0.1.0) (2026-04-22)
 
 ### 核心功能
@@ -20,3 +31,4 @@ All notable changes to this project will be documented in this file.
 - 配置管理测试
 - Markdown 解析器测试
 - 文件扫描器测试
+

@@ -9,7 +9,7 @@
             .hash = "logging-0.1.0-ddTPn7yaAgDAOW1wLPAzJdv7VCPnR2HamKHp-VKKwtKi",
         },
         .@"zig-release" = .{
-            .url = "https://github.com/topaihub/zig-release/archive/61c5c75eaf227886f329bd12787823ed71c8fc5c.tar.gz",
+            .url = "https://github.com/topaihub/zig-release/archive/1159f820b8458a437b22d2c3f1d01590b070ae22.tar.gz",
             .hash = "zig_release-0.1.0-nnPfHSSRAABmgkbvTfC5Sm7NsBlxrYw6eS7_ts4sOkX0",
         },
         .@"mowen-parser" = .{
