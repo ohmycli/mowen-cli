@@ -1,4 +1,5 @@
 const std = @import("std");
+const build_options = @import("build_options");
 const config = @import("config.zig");
 const log = @import("log.zig");
 const logging = @import("zig-logging");
@@ -45,7 +46,7 @@ pub fn main(init: std.process.Init) !void {
         return;
     }
     if (std.mem.eql(u8, first_arg, "--version") or std.mem.eql(u8, first_arg, "-v")) {
-        std.debug.print("mowen-cli version 0.3.1\n", .{});
+        std.debug.print("mowen-cli version {f}\n", .{build_options.app_version});
         return;
     }
 

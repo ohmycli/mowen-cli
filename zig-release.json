@@ -1,0 +1,22 @@
+{
+  "types": [
+    { "type": "feat", "section": "✨ 新功能" },
+    { "type": "fix", "section": "🐛 Bug 修复" },
+    { "type": "docs", "section": "📝 文档" },
+    { "type": "refactor", "section": "♻️ 重构" },
+    { "type": "perf", "section": "⚡ 性能优化" },
+    { "type": "test", "section": "✅ 测试" },
+    { "type": "build", "section": "🏗️ 构建" },
+    { "type": "ci", "section": "👷 CI/CD" },
+    { "type": "chore", "section": "🔧 其他" }
+  ],
+  "header": "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\n",
+  "tagPrefix": "v",
+  "changelogFile": "CHANGELOG.md",
+  "commitUrlFormat": "https://github.com/ohmycli/mowen-cli/commit/{{hash}}",
+  "compareUrlFormat": "https://github.com/ohmycli/mowen-cli/compare/{{previousTag}}...{{currentTag}}",
+  "issueUrlFormat": "https://github.com/ohmycli/mowen-cli/issues/{{id}}",
+  "userUrlFormat": "https://github.com/{{user}}",
+  "releaseCommitMessageFormat": "chore(release): {{currentTag}}",
+  "issuePrefixes": ["#"]
+}

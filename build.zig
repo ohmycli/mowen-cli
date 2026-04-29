@@ -1,8 +1,25 @@
 const std = @import("std");
 
+fn readPackageVersion(b: *std.Build) std.SemanticVersion {
+    const contents = std.Io.Dir.cwd().readFileAlloc(
+        b.graph.io,
+        "build.zig.zon",
+        b.allocator,
+        std.Io.Limit.limited(4096),
+    ) catch @panic("failed to read build.zig.zon");
+    defer b.allocator.free(contents);
+
+    const needle = ".version = \"";
+    const start = std.mem.indexOf(u8, contents, needle) orelse @panic("missing .version in build.zig.zon");
+    const after = start + needle.len;
+    const end = std.mem.indexOfScalarPos(u8, contents, after, '"') orelse @panic("unterminated .version in build.zig.zon");
+    return std.SemanticVersion.parse(contents[after..end]) catch @panic("invalid semantic version in build.zig.zon");
+}
+
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const package_version = readPackageVersion(b);
 
     // Import zig-logging dependency
     const logging_dep = b.dependency("zig-logging", .{
@@ -18,18 +35,25 @@ pub fn build(b: *std.Build) void {
     });
     const parser_module = parser_dep.module("mowen-parser");
 
+    const build_options = b.addOptions();
+    build_options.addOption(std.SemanticVersion, "app_version", package_version);
+
+    const root_module = b.createModule(.{
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{ .name = "zig-logging", .module = logging_module },
+            .{ .name = "mowen-parser", .module = parser_module },
+        },
+    });
+    root_module.addOptions("build_options", build_options);
+
     // Create executable
     const exe = b.addExecutable(.{
         .name = "mowen-cli",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{
-                .{ .name = "zig-logging", .module = logging_module },
-                .{ .name = "mowen-parser", .module = parser_module },
-            },
-        }),
+        .root_module = root_module,
+        .version = package_version,
     });
 
     b.installArtifact(exe);
@@ -56,7 +80,6 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-
 
     // Config tests
     const config_tests = b.addTest(.{

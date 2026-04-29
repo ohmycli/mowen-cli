@@ -437,33 +437,9 @@ Issues and Pull Requests are welcome!
 
 MIT License
 
-## Changelog
+## Release History
 
-### v0.3.1 (2026-04-29)
-
-**Improvements**
-- ✅ Console and trace logs now emit ANSI colors by default.
-- ✅ `mowen-cli --version` now reports `0.3.1`.
-
-### v0.1.0 (2026-04-22)
-
-**Core Features**
-- ✅ Single-file management: `create`, `edit`, `set-privacy` commands
-- ✅ Batch upload: `upload` command, auto-scans current directory
-- ✅ **Metadata management**: `upload` command now also saves noteId for subsequent editing!
-- ✅ Markdown parsing: Supports headings, paragraphs, bold, links, blockquotes, code blocks, horizontal rules
-- ✅ Configuration management: Supports config file, environment variables, CLI arguments
-- ✅ Rate limiting: Auto 1 second/request to avoid triggering API limits
-- ✅ Preview mode: Dry-run support
-
-**Testing**
-- ✅ 27 unit tests, all passing
-- ✅ Configuration management tests
-- ✅ Markdown parser tests
-- ✅ File scanner tests
-
-**Key Improvements**
-- 🎉 Batch upload now supports metadata saving for subsequent editing and privacy settings
+See [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
