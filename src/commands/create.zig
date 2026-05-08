@@ -10,8 +10,8 @@ const logging = @import("zig-logging");
 const builtin = @import("builtin");
 const freeNoteAtom = @import("../commands/helpers.zig").freeNoteAtom;
 const normalizePath = @import("../commands/helpers.zig").normalizePath;
-const ImageUploader = @import("../image_uploader.zig").ImageUploader;
-const DryRunResolver = @import("../image_uploader.zig").DryRunResolver;
+const ImageUploader = @import("../infra/image_uploader.zig").ImageUploader;
+const DryRunResolver = @import("../infra/image_uploader.zig").DryRunResolver;
 const common = @import("common.zig");
 
 pub fn run(app: *App, args: *std.process.Args.Iterator) !void {

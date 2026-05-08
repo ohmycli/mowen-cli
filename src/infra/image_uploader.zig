@@ -1,8 +1,8 @@
 const std = @import("std");
 const converter = @import("mowen-parser");
-const Api = @import("core/api.zig").Api;
-const metadata = @import("metadata.zig");
-const log = @import("log.zig");
+const Api = @import("../core/api.zig").Api;
+const metadata = @import("../metadata.zig");
+const log = @import("../log.zig");
 const logging = @import("zig-logging");
 
 pub const ImageUploader = struct {

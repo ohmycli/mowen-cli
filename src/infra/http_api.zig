@@ -137,6 +137,12 @@ pub const HttpApi = struct {
                 std.debug.print("Rate limit: 1 request/second, Daily quota: 100 creates, 1000 edits, 100 privacy changes.\n", .{});
                 return error.RateLimitExceeded;
             }
+            if (@intFromEnum(result.status) >= 500) {
+                log.err("http_api", "Server error (5xx), please retry later", &.{
+                    logging.LogField.int("status", @intFromEnum(result.status)),
+                });
+                return error.ServerError;
+            }
             log.err("http_api", "HTTP request failed", &.{
                 logging.LogField.int("status", @intFromEnum(result.status)),
             });

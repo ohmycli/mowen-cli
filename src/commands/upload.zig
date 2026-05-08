@@ -2,7 +2,7 @@ const std = @import("std");
 const App = @import("../app.zig").App;
 const scanner = @import("../scanner.zig");
 const converter = @import("mowen-parser");
-const ImageUploader = @import("../image_uploader.zig").ImageUploader;
+const ImageUploader = @import("../infra/image_uploader.zig").ImageUploader;
 const metadata = @import("../metadata.zig");
 const types = @import("../core/api.zig");
 const freeNoteAtom = @import("helpers.zig").freeNoteAtom;
@@ -83,6 +83,8 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
 
     var success_count: usize = 0;
     var fail_count: usize = 0;
+    var failed_files: std.ArrayList([]const u8) = .empty;
+    defer failed_files.deinit(allocator);
 
     for (files, 0..) |file, idx| {
         std.debug.print("\r[{d}/{d}] Uploading {s}...", .{ idx + 1, files.len, file });
@@ -90,6 +92,7 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
         const content = scanner.readFileContent(allocator, io, file) catch |err| {
             std.debug.print(" FAILED ({s})\n", .{@errorName(err)});
             fail_count += 1;
+            try failed_files.append(allocator, file);
             continue;
         };
         defer allocator.free(content);
@@ -101,6 +104,7 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
         const note_atom = converter.convertWithResolver(allocator, content, image_resolver) catch |err| {
             std.debug.print(" FAILED ({s})\n", .{@errorName(err)});
             fail_count += 1;
+            try failed_files.append(allocator, file);
             continue;
         };
         defer note_atom.deinit(allocator);
@@ -113,6 +117,7 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
         const note_id = app.api.createNote(note_atom.doc.content, settings) catch |err| {
             std.debug.print(" FAILED ({s})\n", .{@errorName(err)});
             fail_count += 1;
+            try failed_files.append(allocator, file);
             continue;
         };
         defer allocator.free(note_id);
@@ -178,6 +183,12 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     }
 
     std.debug.print("\n✓ Upload complete: {d} succeeded, {d} failed\n", .{ success_count, fail_count });
+    if (failed_files.items.len > 0) {
+        std.debug.print("\nFailed files:\n", .{});
+        for (failed_files.items) |f| {
+            std.debug.print("  - {s}\n", .{f});
+        }
+    }
     if (success_count > 0) {
         std.debug.print("  Metadata saved to .mowen/metadata.json\n", .{});
         std.debug.print("  You can now use 'edit' and 'set-privacy' commands on these files.\n", .{});

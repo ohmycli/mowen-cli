@@ -48,6 +48,15 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
         return error.MissingArgument;
     };
 
+    // Validate privacy value
+    if (!std.mem.eql(u8, priv, "public") and
+        !std.mem.eql(u8, priv, "private") and
+        !std.mem.eql(u8, priv, "rule"))
+    {
+        std.debug.print("Error: Invalid privacy value '{s}'. Must be: public, private, or rule\n", .{priv});
+        return error.InvalidArgument;
+    }
+
     std.Io.Dir.cwd().access(io, file, .{}) catch |err| {
         std.debug.print("Error: File '{s}' not found or not accessible: {s}\n", .{ file, @errorName(err) });
         return error.FileNotFound;
