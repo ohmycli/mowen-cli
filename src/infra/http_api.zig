@@ -9,14 +9,22 @@ pub const HttpApi = struct {
     io: std.Io,
     api_key: []const u8,
     base_url: []const u8,
+    timeout_ms: u32,
+    client: std.http.Client,
 
-    pub fn init(allocator: std.mem.Allocator, io: std.Io, api_key: []const u8, base_url: []const u8) HttpApi {
+    pub fn init(allocator: std.mem.Allocator, io: std.Io, api_key: []const u8, base_url: []const u8, timeout_ms: u32) HttpApi {
         return .{
             .allocator = allocator,
             .io = io,
             .api_key = api_key,
             .base_url = base_url,
+            .timeout_ms = timeout_ms,
+            .client = std.http.Client{ .allocator = allocator, .io = io },
         };
+    }
+
+    pub fn deinit(self: *HttpApi) void {
+        self.client.deinit();
     }
 
     pub fn api(self: *HttpApi) Api {
@@ -102,13 +110,10 @@ pub const HttpApi = struct {
         const auth_header = try std.fmt.allocPrint(self.allocator, "Bearer {s}", .{self.api_key});
         defer self.allocator.free(auth_header);
 
-        var client = std.http.Client{ .allocator = self.allocator, .io = self.io };
-        defer client.deinit();
-
         var response_writer = std.Io.Writer.Allocating.init(self.allocator);
         defer response_writer.deinit();
 
-        const result = try client.fetch(.{
+        const result = try self.client.fetch(.{
             .method = .POST,
             .location = .{ .url = url },
             .extra_headers = &[_]std.http.Header{
@@ -182,13 +187,10 @@ pub const HttpApi = struct {
         const auth_header = try std.fmt.allocPrint(self.allocator, "Bearer {s}", .{self.api_key});
         defer self.allocator.free(auth_header);
 
-        var client = std.http.Client{ .allocator = self.allocator, .io = self.io };
-        defer client.deinit();
-
         var response_writer = std.Io.Writer.Allocating.init(self.allocator);
         defer response_writer.deinit();
 
-        const result = try client.fetch(.{
+        const result = try self.client.fetch(.{
             .method = .POST,
             .location = .{ .url = url },
             .extra_headers = &[_]std.http.Header{

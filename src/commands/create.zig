@@ -12,6 +12,7 @@ const freeNoteAtom = @import("../commands/helpers.zig").freeNoteAtom;
 const normalizePath = @import("../commands/helpers.zig").normalizePath;
 const ImageUploader = @import("../image_uploader.zig").ImageUploader;
 const DryRunResolver = @import("../image_uploader.zig").DryRunResolver;
+const common = @import("common.zig");
 
 pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     const allocator = app.allocator;
@@ -71,21 +72,8 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     });
 
     // Parse tags
-    var tags: std.ArrayList([]const u8) = .empty;
-    defer {
-        for (tags.items) |tag| allocator.free(tag);
-        tags.deinit(allocator);
-    }
-
-    if (tags_str) |ts| {
-        var iter = std.mem.splitScalar(u8, ts, ',');
-        while (iter.next()) |tag| {
-            const trimmed = std.mem.trim(u8, tag, " ");
-            if (trimmed.len > 0) {
-                try tags.append(allocator, try allocator.dupe(u8, trimmed));
-            }
-        }
-    }
+    var tags = try common.parseTags(allocator, tags_str);
+    defer common.freeTags(allocator, &tags);
 
     // Read file
     const content = scanner.readFileContent(allocator, io, file) catch |err| {
@@ -149,14 +137,7 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     const normalized_path = try normalizePath(allocator, abs_path);
     defer allocator.free(normalized_path);
 
-    const now_ns = std.Io.Timestamp.now(io, .real).nanoseconds;
-    const now = @as(i64, @intCast(@divFloor(now_ns, std.time.ns_per_ms)));
-    const note_meta = metadata.NoteMetadata{
-        .filePath = try allocator.dupe(u8, normalized_path),
-        .noteId = try allocator.dupe(u8, note_id),
-        .createdAt = now,
-        .updatedAt = now,
-    };
+    const note_meta = try common.buildNoteMetadata(allocator, io, normalized_path, note_id);
 
     try meta_store.notes.append(allocator, note_meta);
     try meta_store.save(io);

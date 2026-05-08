@@ -72,7 +72,8 @@ pub fn main(init: std.process.Init) !void {
     };
     defer cfg.deinit();
 
-    var http_api = HttpApi.init(allocator, init.io, cfg.api_key, cfg.api_endpoint);
+    var http_api = HttpApi.init(allocator, init.io, cfg.api_key, cfg.api_endpoint, cfg.timeout_ms);
+    defer http_api.deinit();
     var app = App.initFromInit(init, cfg, http_api.api());
 
     log.info("app", "Executing command", &.{
