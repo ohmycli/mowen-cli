@@ -2,6 +2,7 @@ const std = @import("std");
 const App = @import("../app.zig").App;
 const scanner = @import("../scanner.zig");
 const converter = @import("mowen-parser");
+const ImageUploader = @import("../image_uploader.zig").ImageUploader;
 const metadata = @import("../metadata.zig");
 const log = @import("../log.zig");
 const logging = @import("zig-logging");
@@ -92,7 +93,11 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     defer allocator.free(content);
 
     // Convert
-    const note_atom = converter.convert(allocator, content) catch |err| {
+    var img_uploader = ImageUploader.init(allocator, io, app.api, &meta_store);
+    defer img_uploader.deinit();
+
+    const image_resolver = img_uploader.resolver();
+    const note_atom = converter.convertWithResolver(allocator, content, image_resolver) catch |err| {
         std.debug.print("Error: Failed to convert markdown: {s}\n", .{@errorName(err)});
         return err;
     };

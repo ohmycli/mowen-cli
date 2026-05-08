@@ -30,6 +30,7 @@ pub const HttpApi = struct {
         .create_note = createNoteImpl,
         .edit_note = editNoteImpl,
         .set_privacy = setPrivacyImpl,
+        .upload_image_from_url = uploadImageFromUrlImpl,
     };
 
     fn createNoteImpl(ptr: *anyopaque, content: []types.NoteAtom, settings: types.NoteRequest.NoteSettings) anyerror![]const u8 {
@@ -157,5 +158,84 @@ pub const HttpApi = struct {
         defer parsed.deinit();
 
         return try self.allocator.dupe(u8, parsed.value.noteId);
+    }
+
+    fn uploadImageFromUrlImpl(ptr: *anyopaque, image_url: []const u8) anyerror![]const u8 {
+        const self: *HttpApi = @ptrCast(@alignCast(ptr));
+        const file_name = try deriveFileNameFromSource(self.allocator, image_url);
+        defer self.allocator.free(file_name);
+
+        const json_str = try std.fmt.allocPrint(
+            self.allocator,
+            "{{\"fileType\":1,\"url\":\"{s}\",\"fileName\":\"{s}\"}}",
+            .{ image_url, file_name },
+        );
+        defer self.allocator.free(json_str);
+
+        const url = try std.fmt.allocPrint(self.allocator, "{s}/upload/url", .{self.base_url});
+        defer self.allocator.free(url);
+
+        const auth_header = try std.fmt.allocPrint(self.allocator, "Bearer {s}", .{self.api_key});
+        defer self.allocator.free(auth_header);
+
+        var client = std.http.Client{ .allocator = self.allocator, .io = self.io };
+        defer client.deinit();
+
+        var response_writer = std.Io.Writer.Allocating.init(self.allocator);
+        defer response_writer.deinit();
+
+        const result = try client.fetch(.{
+            .method = .POST,
+            .location = .{ .url = url },
+            .extra_headers = &[_]std.http.Header{
+                .{ .name = "Authorization", .value = auth_header },
+                .{ .name = "Content-Type", .value = "application/json" },
+            },
+            .payload = json_str,
+            .response_writer = &response_writer.writer,
+        });
+
+        if (result.status != .ok) {
+            log.err("http_api", "Image upload failed", &.{
+                logging.LogField.int("status", @intFromEnum(result.status)),
+            });
+            return error.UploadFailed;
+        }
+
+        const response_body = response_writer.writer.buffer[0..response_writer.writer.end];
+
+        // Parse response to get fileId from {"file":{"fileId":"xxx"}}
+        const parsed = std.json.parseFromSlice(
+            struct { file: struct { fileId: []const u8 } },
+            self.allocator,
+            response_body,
+            .{ .ignore_unknown_fields = true },
+        ) catch {
+            log.err("http_api", "Failed to parse image upload response", &.{});
+            return error.JsonParseFailed;
+        };
+        defer parsed.deinit();
+
+        return try self.allocator.dupe(u8, parsed.value.file.fileId);
+    }
+
+    fn deriveFileNameFromSource(allocator: std.mem.Allocator, source: []const u8) ![]const u8 {
+        // Extract filename from URL or path
+        var last_slash: usize = 0;
+        for (source, 0..) |c, i| {
+            if (c == '/' or c == '\\') last_slash = i + 1;
+        }
+        var end = source.len;
+        for (source, 0..) |c, i| {
+            if (c == '?' or c == '#') {
+                end = i;
+                break;
+            }
+        }
+        const name = source[last_slash..end];
+        if (name.len == 0 or name.len > 200) {
+            return try allocator.dupe(u8, "image.png");
+        }
+        return try allocator.dupe(u8, name);
     }
 };

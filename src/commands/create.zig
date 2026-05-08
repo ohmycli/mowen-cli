@@ -10,6 +10,7 @@ const logging = @import("zig-logging");
 const builtin = @import("builtin");
 const freeNoteAtom = @import("../commands/helpers.zig").freeNoteAtom;
 const normalizePath = @import("../commands/helpers.zig").normalizePath;
+const ImageUploader = @import("../image_uploader.zig").ImageUploader;
 
 pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     const allocator = app.allocator;
@@ -92,8 +93,17 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     };
     defer allocator.free(content);
 
-    // Convert to NoteAtom
-    const note_atom = converter.convert(allocator, content) catch |err| {
+    // Init metadata
+    var meta_store = metadata.MetadataStore.init(allocator);
+    defer meta_store.deinit(io);
+    try meta_store.load(io);
+
+    // Convert to NoteAtom (with image resolver for URL images)
+    var img_uploader = ImageUploader.init(allocator, io, app.api, &meta_store);
+    defer img_uploader.deinit();
+
+    const image_resolver = img_uploader.resolver();
+    const note_atom = converter.convertWithResolver(allocator, content, image_resolver) catch |err| {
         std.debug.print("Error: Failed to convert markdown: {s}\n", .{@errorName(err)});
         return err;
     };
@@ -106,11 +116,6 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
             else => {},
         }
     }
-
-    // Init metadata
-    var meta_store = metadata.MetadataStore.init(allocator);
-    defer meta_store.deinit(io);
-    try meta_store.load(io);
 
     if (dry_run) {
         std.debug.print("[DRY RUN] Would create note from '{s}'\n", .{file});
