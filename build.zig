@@ -107,12 +107,32 @@ pub fn build(b: *std.Build) void {
 
     // Parser tests
 
+    // Metadata tests
+    const metadata_module = b.createModule(.{
+        .root_source_file = b.path("src/metadata.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const metadata_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/metadata_test.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "metadata", .module = metadata_module },
+            },
+        }),
+    });
+
     const run_config_tests = b.addRunArtifact(config_tests);
     const run_scanner_tests = b.addRunArtifact(scanner_tests);
+    const run_metadata_tests = b.addRunArtifact(metadata_tests);
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_config_tests.step);
     test_step.dependOn(&run_scanner_tests.step);
+    test_step.dependOn(&run_metadata_tests.step);
 
     const release_dep = b.dependency("zig-release", .{});
     const zig_release = @import("zig-release");

@@ -108,7 +108,7 @@ pub const MetadataStore = struct {
         try writer.flush();
     }
 
-    fn parseMetadata(self: *MetadataStore, content: []const u8) !void {
+    pub fn parseMetadata(self: *MetadataStore, content: []const u8) !void {
         const parsed = try std.json.parseFromSlice(
             struct {
                 notes: []struct {
