@@ -103,15 +103,7 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
             fail_count += 1;
             continue;
         };
-        defer {
-            switch (note_atom) {
-                .doc => |doc| {
-                    for (doc.content) |atom| freeNoteAtom(allocator, atom);
-                    allocator.free(doc.content);
-                },
-                else => {},
-            }
-        }
+        defer note_atom.deinit(allocator);
 
         const settings = types.NoteRequest.NoteSettings{
             .autoPublish = if (auto_publish) true else app.config.auto_publish,

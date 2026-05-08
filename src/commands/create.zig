@@ -109,15 +109,7 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
         std.debug.print("Error: Failed to convert markdown: {s}\n", .{@errorName(err)});
         return err;
     };
-    defer {
-        switch (note_atom) {
-            .doc => |doc| {
-                for (doc.content) |atom| freeNoteAtom(allocator, atom);
-                allocator.free(doc.content);
-            },
-            else => {},
-        }
-    }
+    defer note_atom.deinit(allocator);
 
     if (dry_run) {
         std.debug.print("[DRY RUN] Would create note from '{s}'\n", .{file});
