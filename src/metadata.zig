@@ -177,29 +177,17 @@ pub const MetadataStore = struct {
         var json_buffer: std.ArrayList(u8) = .empty;
         defer json_buffer.deinit(self.allocator);
 
-        try json_buffer.appendSlice(self.allocator, "{\"notes\":[");
+        const save_data = struct {
+            notes: []const NoteMetadata,
+            last_api_call_time: ?i64,
+        }{
+            .notes = self.notes.items,
+            .last_api_call_time = self.last_api_call_time,
+        };
 
-        for (self.notes.items, 0..) |note, i| {
-            if (i > 0) try json_buffer.appendSlice(self.allocator, ",");
-            const note_json = try std.fmt.allocPrint(self.allocator, "{{\"filePath\":\"{s}\",\"noteId\":\"{s}\",\"createdAt\":{},\"updatedAt\":{}}}", .{
-                note.filePath,
-                note.noteId,
-                note.createdAt,
-                note.updatedAt,
-            });
-            defer self.allocator.free(note_json);
-            try json_buffer.appendSlice(self.allocator, note_json);
-        }
-
-        try json_buffer.appendSlice(self.allocator, "],\"last_api_call_time\":");
-        if (self.last_api_call_time) |time| {
-            const time_str = try std.fmt.allocPrint(self.allocator, "{}", .{time});
-            defer self.allocator.free(time_str);
-            try json_buffer.appendSlice(self.allocator, time_str);
-        } else {
-            try json_buffer.appendSlice(self.allocator, "null");
-        }
-        try json_buffer.appendSlice(self.allocator, "}");
+        const json_str = try std.fmt.allocPrint(self.allocator, "{f}", .{std.json.fmt(save_data, .{})});
+        defer self.allocator.free(json_str);
+        try json_buffer.appendSlice(self.allocator, json_str);
 
         {
             const file = try std.Io.Dir.cwd().createFile(io, tmp_file, .{});

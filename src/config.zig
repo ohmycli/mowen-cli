@@ -39,7 +39,7 @@ pub const Config = struct {
             .api_key = try allocator.dupe(u8, ""),
             .api_endpoint = try allocator.dupe(u8, "https://open.mowen.cn/api/open/api/v1"),
             .timeout_ms = 30000,
-            .default_tags = &[_][]const u8{},
+            .default_tags = try allocator.alloc([]const u8, 0),
             .auto_publish = false,
             .allocator = allocator,
         };
@@ -108,9 +108,10 @@ fn loadFromFile(allocator: std.mem.Allocator, io: std.Io, path: []const u8) !Con
     else
         try allocator.dupe(u8, "https://open.mowen.cn/api/open/api/v1");
 
-    var tags: [][]const u8 = &[_][]const u8{};
+    var tags: [][]const u8 = try allocator.alloc([]const u8, 0);
     if (root.get("default_tags")) |tags_value| {
         const tags_array = tags_value.array;
+        allocator.free(tags);
         tags = try allocator.alloc([]const u8, tags_array.items.len);
         for (tags_array.items, 0..) |tag, i| {
             tags[i] = try allocator.dupe(u8, tag.string);

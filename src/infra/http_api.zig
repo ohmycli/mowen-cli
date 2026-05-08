@@ -77,11 +77,15 @@ pub const HttpApi = struct {
 
     fn setPrivacyImpl(ptr: *anyopaque, note_id: []const u8, is_public: []const u8) anyerror![]const u8 {
         const self: *HttpApi = @ptrCast(@alignCast(ptr));
-        const json_str = try std.fmt.allocPrint(
-            self.allocator,
-            "{{\"noteId\":\"{s}\",\"isPublic\":{s}}}",
-            .{ note_id, is_public },
-        );
+        const request = struct {
+            noteId: []const u8,
+            isPublic: []const u8,
+        }{
+            .noteId = note_id,
+            .isPublic = is_public,
+        };
+
+        const json_str = try std.fmt.allocPrint(self.allocator, "{f}", .{std.json.fmt(request, .{})});
         defer self.allocator.free(json_str);
 
         log.debug("http_api", "Setting privacy", &.{
