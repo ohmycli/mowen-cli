@@ -78,3 +78,24 @@ pub const ImageUploader = struct {
         return try self.allocator.dupe(u8, file_id);
     }
 };
+
+/// A dummy resolver for dry-run mode that returns a placeholder UUID.
+pub const DryRunResolver = struct {
+    allocator: std.mem.Allocator,
+
+    pub fn init(allocator: std.mem.Allocator) DryRunResolver {
+        return .{ .allocator = allocator };
+    }
+
+    pub fn resolver(self: *DryRunResolver) converter.ImageResolver {
+        return .{
+            .ctx = @ptrCast(self),
+            .resolve = resolveThunk,
+        };
+    }
+
+    fn resolveThunk(ctx: *anyopaque, source: []const u8, _: []const u8) anyerror![]const u8 {
+        const self: *DryRunResolver = @ptrCast(@alignCast(ctx));
+        return try std.fmt.allocPrint(self.allocator, "dry-run:{s}", .{source});
+    }
+};

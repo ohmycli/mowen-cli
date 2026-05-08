@@ -11,6 +11,7 @@ const builtin = @import("builtin");
 const freeNoteAtom = @import("../commands/helpers.zig").freeNoteAtom;
 const normalizePath = @import("../commands/helpers.zig").normalizePath;
 const ImageUploader = @import("../image_uploader.zig").ImageUploader;
+const DryRunResolver = @import("../image_uploader.zig").DryRunResolver;
 
 pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     const allocator = app.allocator;
@@ -102,7 +103,8 @@ pub fn run(app: *App, args: *std.process.Args.Iterator) !void {
     var img_uploader = ImageUploader.init(allocator, io, app.api, &meta_store);
     defer img_uploader.deinit();
 
-    const image_resolver = img_uploader.resolver();
+    var dry_resolver = DryRunResolver.init(allocator);
+    const image_resolver = if (dry_run) dry_resolver.resolver() else img_uploader.resolver();
     const note_atom = converter.convertWithResolver(allocator, content, image_resolver) catch |err| {
         std.debug.print("Error: Failed to convert markdown: {s}\n", .{@errorName(err)});
         return err;
